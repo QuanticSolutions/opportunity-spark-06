@@ -29,7 +29,7 @@ export default function SubscriptionSelect() {
       if (existing) {
         if (existing.status === "active") {
           navigate("/dashboard/provider", { replace: true });
-        } else if (existing.status === "pending_payment" || existing.payment_status === "awaiting_payment") {
+        } else if (existing.status === "pending") {
           navigate("/provider/payment", { replace: true });
         } else {
           navigate("/provider/pending", { replace: true });

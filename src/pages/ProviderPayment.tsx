@@ -26,15 +26,15 @@ export default function ProviderPayment() {
   }, [user]);
 
   const fetchSubscription = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("provider_subscriptions")
       .select("*, subscription_plans(*)")
       .eq("provider_id", user!.id)
-      .single();
-
+      .single()
+  
     if (!data) { navigate("/provider/subscribe", { replace: true }); return; }
     if (data.status === "active") { navigate("/dashboard/provider", { replace: true }); return; }
-    if (data.receipt_url || data.status === "under_review") { navigate("/provider/pending", { replace: true }); return; }
+    // if (data.receipt_url || data.status === "pending") { navigate("/provider/pending", { replace: true }); return; }
 
     setSub(data);
     setPlan(data.subscription_plans);
@@ -128,7 +128,7 @@ export default function ProviderPayment() {
             </div>
             <div className="flex justify-between items-center py-2 px-4 rounded-lg bg-accent/50">
               <span className="text-sm text-muted-foreground">Amount</span>
-              <span className="font-bold text-xl text-primary">${plan?.price_monthly}/month</span>
+              <span className="font-bold text-xl text-primary">${plan?.price}/month</span>
             </div>
           </CardContent>
         </Card>
