@@ -53,11 +53,11 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminProviders from "./pages/admin/AdminProviders";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
-import AdminOpportunities from "./pages/admin/AdminOpportunities";
-import AdminArticles from "./pages/admin/AdminArticles";
+import AdminContentManagement from "./pages/admin/AdminContentManagement";
 import AdminSubmissions from "./pages/admin/AdminSubmissions";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSettings from "./pages/admin/AdminSettings";
+import ArticleDetail from "./pages/ArticleDetail";
 
 // Auth pages
 import AuthCallback from "./pages/Auth";
@@ -76,8 +76,8 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/articles" element={<Articles />} />
+            <Route path="/articles/:slug" element={<ArticleDetail />} />
             <Route path="/opportunities" element={<OpportunitiesBrowse />} />
-            <Route path="/opportunities/:id" element={<OpportunityDetails />} />
             <Route path="/services/hire-talent" element={<HireTalent />} />
             <Route path="/services/technical-writing" element={<TechnicalWriting />} />
             <Route path="/privacy" element={<Privacy />} />
@@ -126,8 +126,7 @@ const App = () => (
               <Route path="users" element={<AdminRoute requiredRole="admin"><AdminUsers /></AdminRoute>} />
               <Route path="providers" element={<AdminProviders />} />
               <Route path="subscriptions" element={<AdminSubscriptions />} />
-              <Route path="opportunities" element={<AdminOpportunities />} />
-              <Route path="articles" element={<AdminArticles />} />
+              <Route path="content" element={<AdminContentManagement />} />
               <Route path="submissions" element={<AdminSubmissions />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="settings" element={<AdminRoute requiredRole="admin"><AdminSettings /></AdminRoute>} />
