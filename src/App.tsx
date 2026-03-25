@@ -119,6 +119,7 @@ const App = () => (
               <Route path="subscription" element={<ProviderSubscription />} />
               <Route path="team" element={<ProviderTeam />} />
               <Route path="settings" element={<ProviderSettings />} />
+              <Route path="notifications" element={<Notifications />} />
             </Route>
 
             {/* Admin panel */}

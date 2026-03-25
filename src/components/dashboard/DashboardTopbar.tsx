@@ -20,11 +20,11 @@ export default function DashboardTopbar() {
           variant="ghost"
           size="icon"
           className="relative text-muted-foreground hover:text-primary"
-          onClick={() => navigate("/dashboard/seeker/notifications")}
+          onClick={() => profile.role == "provider" ? navigate(`/dashboard/provider/notifications`) : navigate(`/dashboard/seeker/notifications`)}
         >
           <Bell size={18} />
         </Button>
-        <Avatar className="h-8 w-8 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all" onClick={() => navigate("/dashboard/seeker/profile")}>
+        <Avatar className="h-8 w-8 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all" onClick={() => profile.role == "provider" ? navigate(`/dashboard/provider/settings`) : navigate(`/dashboard/seekr/profile`)}>
           <AvatarImage src={profile?.avatar_url || ""} />
           <AvatarFallback className="bg-accent text-accent-foreground text-xs font-bold">{initials}</AvatarFallback>
         </Avatar>
