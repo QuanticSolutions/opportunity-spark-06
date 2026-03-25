@@ -5,26 +5,29 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
+import { Plus, Eye, Trash2, Pencil } from "lucide-react";
+import RichTextEditor from "@/components/RichTextEditor";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminArticles() {
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", slug: "", content: "", excerpt: "", status: "draft" });
+  const [form, setForm] = useState({ title: "", slug: "", content: "", excerpt: "", status: "draft", cover_image: "" });
   const [editId, setEditId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const fetchArticles = async () => {
     setLoading(true);
     const { data } = await supabase
       .from("articles")
-      .select("*")
+      .select("*, profiles:author_id(full_name)")
       .order("created_at", { ascending: false });
     setArticles(data || []);
     setLoading(false);
@@ -35,14 +38,38 @@ export default function AdminArticles() {
   const generateSlug = (title: string) =>
     title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `articles/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(filePath, file);
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
+    setForm((f) => ({ ...f, cover_image: urlData.publicUrl }));
+    setUploading(false);
+  };
+
   const handleSave = async () => {
+    if (!form.title.trim()) {
+      toast({ title: "Title is required", variant: "destructive" });
+      return;
+    }
     const adminUser = (await supabase.auth.getUser()).data.user;
     const payload: any = {
-      ...form,
+      title: form.title,
       slug: form.slug || generateSlug(form.title),
+      content: form.content,
+      excerpt: form.excerpt,
+      status: form.status,
+      cover_image: form.cover_image || null,
       author_id: adminUser?.id,
     };
-
     if (form.status === "published") {
       payload.published_at = new Date().toISOString();
     }
@@ -67,10 +94,14 @@ export default function AdminArticles() {
     });
 
     toast({ title: editId ? "Article updated" : "Article created" });
-    setDialogOpen(false);
-    setForm({ title: "", slug: "", content: "", excerpt: "", status: "draft" });
-    setEditId(null);
+    resetForm();
     fetchArticles();
+  };
+
+  const resetForm = () => {
+    setDialogOpen(false);
+    setForm({ title: "", slug: "", content: "", excerpt: "", status: "draft", cover_image: "" });
+    setEditId(null);
   };
 
   const openEdit = (article: any) => {
@@ -80,12 +111,14 @@ export default function AdminArticles() {
       content: article.content || "",
       excerpt: article.excerpt || "",
       status: article.status,
+      cover_image: article.cover_image || "",
     });
     setEditId(article.id);
     setDialogOpen(true);
   };
 
   const deleteArticle = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this article?")) return;
     await supabase.from("articles").delete().eq("id", id);
     const adminUser = (await supabase.auth.getUser()).data.user;
     await supabase.from("admin_logs").insert({
@@ -98,21 +131,24 @@ export default function AdminArticles() {
     fetchArticles();
   };
 
+  const togglePublish = async (article: any) => {
+    const newStatus = article.status === "published" ? "draft" : "published";
+    const update: any = { status: newStatus };
+    if (newStatus === "published") update.published_at = new Date().toISOString();
+    await supabase.from("articles").update(update).eq("id", article.id);
+    toast({ title: newStatus === "published" ? "Article published" : "Article unpublished" });
+    fetchArticles();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Article Management</h1>
-          <p className="text-sm text-muted-foreground">Create and manage platform articles</p>
-        </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) { setEditId(null); setForm({ title: "", slug: "", content: "", excerpt: "", status: "draft" }); }
-        }}>
+        <h2 className="text-lg font-semibold text-foreground">Articles</h2>
+        <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); else setDialogOpen(true); }}>
           <DialogTrigger asChild>
             <Button><Plus className="mr-2 h-4 w-4" /> New Article</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editId ? "Edit Article" : "New Article"}</DialogTitle>
             </DialogHeader>
@@ -127,11 +163,25 @@ export default function AdminArticles() {
               </div>
               <div>
                 <Label>Excerpt</Label>
-                <Textarea value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} rows={2} />
+                <Input value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} placeholder="Short summary..." />
+              </div>
+              <div>
+                <Label>Featured Image</Label>
+                <div className="space-y-2">
+                  {form.cover_image && (
+                    <img src={form.cover_image} alt="Cover" className="w-full max-h-48 object-cover rounded-lg" />
+                  )}
+                  <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
+                  {uploading && <p className="text-xs text-muted-foreground">Uploading...</p>}
+                </div>
               </div>
               <div>
                 <Label>Content</Label>
-                <Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={8} />
+                <RichTextEditor
+                  value={form.content}
+                  onChange={(html) => setForm({ ...form, content: html })}
+                  placeholder="Write your article content..."
+                />
               </div>
               <div>
                 <Label>Status</Label>
@@ -139,12 +189,11 @@ export default function AdminArticles() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="published">Published</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleSave} className="w-full">
+              <Button onClick={handleSave} className="w-full" disabled={uploading}>
                 {editId ? "Update Article" : "Create Article"}
               </Button>
             </div>
@@ -166,7 +215,7 @@ export default function AdminArticles() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
-                  <TableHead>Slug</TableHead>
+                  <TableHead>Author</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Actions</TableHead>
@@ -176,9 +225,11 @@ export default function AdminArticles() {
                 {articles.map((a) => (
                   <TableRow key={a.id}>
                     <TableCell className="font-medium max-w-48 truncate">{a.title}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{a.slug}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {(a.profiles as any)?.full_name || "—"}
+                    </TableCell>
                     <TableCell>
-                      <Badge variant={a.status === "published" ? "default" : a.status === "pending" ? "secondary" : "outline"}>
+                      <Badge variant={a.status === "published" ? "default" : "outline"}>
                         {a.status}
                       </Badge>
                     </TableCell>
@@ -187,8 +238,20 @@ export default function AdminArticles() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="outline" onClick={() => openEdit(a)}>Edit</Button>
-                        <Button size="sm" variant="destructive" onClick={() => deleteArticle(a.id)}>Delete</Button>
+                        <Button size="sm" variant="outline" onClick={() => openEdit(a)}>
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => togglePublish(a)}>
+                          {a.status === "published" ? "Unpublish" : "Publish"}
+                        </Button>
+                        {a.status === "published" && (
+                          <Button size="sm" variant="outline" onClick={() => navigate(`/articles/${a.slug}`)}>
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                        )}
+                        <Button size="sm" variant="destructive" onClick={() => deleteArticle(a.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
