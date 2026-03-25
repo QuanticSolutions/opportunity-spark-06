@@ -4,11 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Plus, UserPlus, Trash2 } from "lucide-react";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newUser, setNewUser] = useState({ email: "", password: "", role: "viewer", full_name: "" });
   const { toast } = useToast();
 
   const fetchUsers = async () => {
@@ -45,6 +53,44 @@ export default function AdminUsers() {
     fetchUsers();
   };
 
+  const createUser = async () => {
+    if (!newUser.email || !newUser.password) {
+      toast({ title: "Email and password are required", variant: "destructive" });
+      return;
+    }
+    if (newUser.password.length < 6) {
+      toast({ title: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify(newUser),
+        }
+      );
+      const result = await res.json();
+      if (!res.ok) {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+      } else {
+        toast({ title: "User created successfully" });
+        setCreateOpen(false);
+        setNewUser({ email: "", password: "", role: "viewer", full_name: "" });
+        fetchUsers();
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setCreating(false);
+  };
+
   const roleBadgeVariant = (role: string) => {
     switch (role) {
       case "admin": return "destructive";
@@ -57,9 +103,50 @@ export default function AdminUsers() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">User Management</h1>
-        <p className="text-sm text-muted-foreground">Manage all platform users</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">User Management</h1>
+          <p className="text-sm text-muted-foreground">Manage all platform users</p>
+        </div>
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger asChild>
+            <Button><UserPlus className="mr-2 h-4 w-4" /> Create User</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New User</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Full Name</Label>
+                <Input value={newUser.full_name} onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })} placeholder="John Doe" />
+              </div>
+              <div>
+                <Label>Email</Label>
+                <Input type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} placeholder="user@example.com" />
+              </div>
+              <div>
+                <Label>Password</Label>
+                <Input type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} placeholder="Min 6 characters" />
+              </div>
+              <div>
+                <Label>Role</Label>
+                <Select value={newUser.role} onValueChange={(v) => setNewUser({ ...newUser, role: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="editor">Editor</SelectItem>
+                    <SelectItem value="viewer">Viewer</SelectItem>
+                    <SelectItem value="seeker">Seeker</SelectItem>
+                    <SelectItem value="provider">Provider</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={createUser} className="w-full" disabled={creating}>
+                {creating ? "Creating..." : "Create User"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card>
@@ -96,14 +183,17 @@ export default function AdminUsers() {
                     <TableCell>
                       <div className="flex gap-1">
                         {user.role !== "admin" && (
-                          <>
-                            <Button size="sm" variant="outline" onClick={() => updateRole(user.id, "editor")}>
-                              Make Editor
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => updateRole(user.id, "viewer")}>
-                              Make Viewer
-                            </Button>
-                          </>
+                          <Select onValueChange={(v) => updateRole(user.id, v)}>
+                            <SelectTrigger className="h-8 w-[130px] text-xs">
+                              <SelectValue placeholder="Change role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="editor">Editor</SelectItem>
+                              <SelectItem value="viewer">Viewer</SelectItem>
+                              <SelectItem value="seeker">Seeker</SelectItem>
+                              <SelectItem value="provider">Provider</SelectItem>
+                            </SelectContent>
+                          </Select>
                         )}
                       </div>
                     </TableCell>
