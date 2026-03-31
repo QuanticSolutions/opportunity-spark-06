@@ -168,15 +168,12 @@ export default function OpportunityDetails() {
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <Card className="glow-border">
               <CardContent className="p-6 space-y-4">
-                {opp.external_link ? (
+                {opp.external_link && (
                   <Button className="btn-gradient w-full rounded-lg font-semibold text-base py-5" onClick={() => window.open(opp.external_link, "_blank")}>
-                    Apply Now <ExternalLink size={16} className="ml-2" />
-                  </Button>
-                ) : (
-                  <Button className="w-full rounded-lg font-semibold text-base py-5" disabled>
-                    No Application Link
+                    Apply Externally <ExternalLink size={16} className="ml-2" />
                   </Button>
                 )}
+                {opp.deadline && <DeadlineCountdown deadline={opp.deadline} />}
 
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
