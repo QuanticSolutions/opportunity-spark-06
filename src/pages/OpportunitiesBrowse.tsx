@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, MapPin, Calendar, Filter, X, Briefcase, ExternalLink } from "lucide-react";
+import SaveOpportunityButton from "@/components/SaveOpportunityButton";
+import DeadlineCountdown from "@/components/DeadlineCountdown";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
