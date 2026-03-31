@@ -210,7 +210,7 @@ export default function OpportunitiesBrowse() {
                             {opp.location || "Remote"}
                             {opp.deadline && <> · Due {new Date(opp.deadline).toLocaleDateString()}</>}
                           </p>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-2 items-center">
                             <Badge className={categoryColors[opp.category] || "bg-muted text-muted-foreground"}>
                               {opp.category}
                             </Badge>
@@ -222,6 +222,7 @@ export default function OpportunitiesBrowse() {
                                 {opp.currency} {opp.stipend_min.toLocaleString()}–{opp.stipend_max.toLocaleString()}
                               </Badge>
                             )}
+                            <DeadlineCountdown deadline={opp.deadline} />
                           </div>
                         </div>
                         <div className="flex gap-2 shrink-0">
