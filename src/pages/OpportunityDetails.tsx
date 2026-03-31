@@ -213,6 +213,13 @@ export default function OpportunityDetails() {
             </Card>
           </div>
         </div>
+
+        {/* Application Form */}
+        {opp.allow_internal_apply && (
+          <div className="mt-8">
+            <ApplicationForm opportunityId={opp.id} opportunityTitle={opp.title} />
+          </div>
+        )}
       </section>
 
       {/* Similar Opportunities */}
