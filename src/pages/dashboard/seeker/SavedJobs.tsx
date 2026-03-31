@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Bookmark, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import DeadlineCountdown from "@/components/DeadlineCountdown";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 interface SavedJob {
   id: string;
-  opportunity: { id: string; title: string; company: string | null; category: string } | null;
+  opportunity: { id: string; title: string; company: string | null; category: string; deadline: string | null } | null;
 }
 
 export default function SavedJobs() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [saved, setSaved] = useState<SavedJob[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +26,7 @@ export default function SavedJobs() {
     if (!user) return;
     const { data } = await supabase
       .from("saved_jobs")
-      .select("id, opportunity:opportunities(id, title, company, category)")
+      .select("id, opportunity:opportunities(id, title, company, category, deadline)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     setSaved((data as unknown as SavedJob[]) || []);
@@ -61,9 +65,19 @@ export default function SavedJobs() {
                 <CardTitle className="text-base">{item.opportunity?.title || "Opportunity"}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">{item.opportunity?.company || "Company"} · <p className="text-sm text-muted-foreground">{item.opportunity?.company || "Company"} · {item.opportunity?.category || "Job"}</p></p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="capitalize">{item.opportunity?.category || "Job"}</Badge>
+                  <DeadlineCountdown deadline={item.opportunity?.deadline || null} />
+                </div>
+                <p className="text-sm text-muted-foreground">{item.opportunity?.company || "Company"}</p>
                 <div className="flex gap-2">
-                  <Button size="sm" className="btn-gradient rounded-lg font-semibold flex-1">Quick Apply</Button>
+                  <Button
+                    size="sm"
+                    className="btn-gradient rounded-lg font-semibold flex-1"
+                    onClick={() => item.opportunity && navigate(`/opportunities/${item.opportunity.id}`)}
+                  >
+                    View & Apply
+                  </Button>
                   <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => handleRemove(item.id)}>
                     <Trash2 size={14} />
                   </Button>

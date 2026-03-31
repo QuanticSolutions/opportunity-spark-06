@@ -84,8 +84,12 @@ export type Database = {
           cover_letter: string | null
           created_at: string
           documents: Json | null
+          email: string | null
           id: string
+          name: string | null
           opportunity_id: string
+          phone: string | null
+          resume_url: string | null
           status: string
           updated_at: string
           user_id: string
@@ -94,8 +98,12 @@ export type Database = {
           cover_letter?: string | null
           created_at?: string
           documents?: Json | null
+          email?: string | null
           id?: string
+          name?: string | null
           opportunity_id: string
+          phone?: string | null
+          resume_url?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -104,8 +112,12 @@ export type Database = {
           cover_letter?: string | null
           created_at?: string
           documents?: Json | null
+          email?: string | null
           id?: string
+          name?: string | null
           opportunity_id?: string
+          phone?: string | null
+          resume_url?: string | null
           status?: string
           updated_at?: string
           user_id?: string

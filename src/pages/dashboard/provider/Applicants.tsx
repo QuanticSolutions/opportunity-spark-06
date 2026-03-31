@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { UserCheck, Calendar, XCircle, CheckCircle, Mail } from "lucide-react";
+import { UserCheck, Calendar, XCircle, CheckCircle, Mail, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +65,21 @@ export default function Applicants() {
       (apps || []).map(a => ({ ...a, opportunity_title: oppMap.get(a.opportunity_id) || "Unknown" }))
     );
     setLoading(false);
+  };
+
+  const viewResume = async (resumeUrl: string) => {
+    if (!resumeUrl) {
+      toast({ title: "No resume uploaded", variant: "destructive" });
+      return;
+    }
+    const { data, error } = await supabase.storage
+      .from("resumes")
+      .createSignedUrl(resumeUrl, 60);
+    if (error || !data?.signedUrl) {
+      toast({ title: "Could not access resume", variant: "destructive" });
+      return;
+    }
+    window.open(data.signedUrl, "_blank");
   };
 
   const updateStatus = async (appId: string, status: string) => {
@@ -141,8 +156,9 @@ export default function Applicants() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-foreground">{(a.profiles as any)?.full_name || "Unknown"}</h3>
+                    <h3 className="font-semibold text-foreground">{(a as any).name || (a.profiles as any)?.full_name || "Unknown"}</h3>
                     <p className="text-sm text-muted-foreground">{a.opportunity_title}</p>
+                    {(a as any).email && <p className="text-xs text-muted-foreground">{(a as any).email}</p>}
                     <p className="text-xs text-muted-foreground mt-1">
                       {(a.profiles as any)?.country} · Applied {new Date(a.created_at).toLocaleDateString()}
                     </p>
@@ -165,10 +181,19 @@ export default function Applicants() {
                         </Button>
                       ))}
                     </div>
+                    {(a as any).resume_url && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => viewResume((a as any).resume_url)}
+                      >
+                        <FileText size={14} className="mr-1" /> Resume
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setEmailModal({ open: true, recipientId: a.user_id, name: (a.profiles as any)?.full_name || "Applicant" })}
+                      onClick={() => setEmailModal({ open: true, recipientId: a.user_id, name: (a as any).name || (a.profiles as any)?.full_name || "Applicant" })}
                     >
                       <Mail size={14} className="mr-1" /> Message
                     </Button>

@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, MapPin, Calendar, Filter, X, Briefcase, ExternalLink } from "lucide-react";
+import SaveOpportunityButton from "@/components/SaveOpportunityButton";
+import DeadlineCountdown from "@/components/DeadlineCountdown";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -208,7 +210,7 @@ export default function OpportunitiesBrowse() {
                             {opp.location || "Remote"}
                             {opp.deadline && <> · Due {new Date(opp.deadline).toLocaleDateString()}</>}
                           </p>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-2 items-center">
                             <Badge className={categoryColors[opp.category] || "bg-muted text-muted-foreground"}>
                               {opp.category}
                             </Badge>
@@ -220,9 +222,11 @@ export default function OpportunitiesBrowse() {
                                 {opp.currency} {opp.stipend_min.toLocaleString()}–{opp.stipend_max.toLocaleString()}
                               </Badge>
                             )}
+                            <DeadlineCountdown deadline={opp.deadline} />
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex gap-2 shrink-0 items-center">
+                          <SaveOpportunityButton opportunityId={opp.id} />
                           <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/opportunities/${opp.id}`); }}>
                             View Details
                           </Button>
