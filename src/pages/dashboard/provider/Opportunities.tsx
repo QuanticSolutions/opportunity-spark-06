@@ -158,6 +158,7 @@ export default function Opportunities() {
                     <Badge className={statusStyles[opp.status] || statusStyles.draft}>{opp.status}</Badge>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">{opp.views_count ?? 0}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{opp.apps_count ?? 0}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" onClick={() => toggleStatus(opp.id, opp.status)} title="Toggle visibility">
