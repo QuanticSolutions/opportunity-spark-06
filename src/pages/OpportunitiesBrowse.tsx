@@ -225,7 +225,8 @@ export default function OpportunitiesBrowse() {
                             <DeadlineCountdown deadline={opp.deadline} />
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex gap-2 shrink-0 items-center">
+                          <SaveOpportunityButton opportunityId={opp.id} />
                           <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/opportunities/${opp.id}`); }}>
                             View Details
                           </Button>
