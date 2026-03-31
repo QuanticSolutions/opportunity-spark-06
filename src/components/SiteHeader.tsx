@@ -20,6 +20,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/LoginModal";
+import NotificationBell from "@/components/NotificationBell";
 
 const opportunityItems = [
   { label: "Jobs", category: "job", desc: "Career opportunities across industries" },
@@ -206,12 +207,7 @@ export default function SiteHeader() {
                   <Search size={18} />
                 </button>
 
-                {!loading && user && (
-                  <button onClick={() => navigate(notificationsPath)}
-                    className="rounded-lg p-2 text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors" aria-label="Notifications">
-                    <Bell size={18} />
-                  </button>
-                )}
+                {!loading && user && <NotificationBell />}
 
                 {!loading && !user && (
                   <>

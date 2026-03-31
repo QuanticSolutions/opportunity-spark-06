@@ -52,10 +52,10 @@ export default function Opportunities() {
   const fetchOpps = async () => {
     const { data } = await supabase
       .from("opportunities")
-      .select("*")
+      .select("*, applications(id)")
       .eq("provider_id", user!.id)
       .order("created_at", { ascending: false });
-    setOpps(data || []);
+    setOpps((data || []).map((o: any) => ({ ...o, apps_count: o.applications?.length ?? 0 })));
     setLoading(false);
   };
 
@@ -143,6 +143,7 @@ export default function Opportunities() {
                 <TableHead className="hidden lg:table-cell">Deadline</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="hidden lg:table-cell">Views</TableHead>
+                <TableHead className="hidden lg:table-cell">Applicants</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -157,6 +158,7 @@ export default function Opportunities() {
                     <Badge className={statusStyles[opp.status] || statusStyles.draft}>{opp.status}</Badge>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">{opp.views_count ?? 0}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{opp.apps_count ?? 0}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" onClick={() => toggleStatus(opp.id, opp.status)} title="Toggle visibility">
