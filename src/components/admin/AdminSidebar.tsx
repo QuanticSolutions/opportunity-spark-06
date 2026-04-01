@@ -30,6 +30,7 @@ const overviewItems = [
 
 const managementItems = [
   { title: "Content", url: "/admin/content", icon: FileText },
+  { title: "Opportunities", url: "/admin/opportunities", icon: Briefcase },
   { title: "Submissions", url: "/admin/submissions", icon: Inbox },
   { title: "Subscriptions", url: "/admin/subscriptions", icon: CreditCard },
 ];
