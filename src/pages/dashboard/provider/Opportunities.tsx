@@ -122,7 +122,8 @@ export default function Opportunities() {
             {postingLimit ? `${activeOpps.length} / ${postingLimit} used` : "Unlimited postings"}
           </p>
         </div>
-        <Button className="btn-gradient rounded-lg font-semibold" disabled={!canPost()} onClick={openCreate}>
+        <Button className="btn-gradient rounded-lg font-semibold" disabled={!canPost()} onClick={openCreate} title={limitMessage() || undefined}>
+          {!canPost() && <Lock size={16} className="mr-1" />}
           <Plus size={18} className="mr-1" /> New Opportunity
         </Button>
       </div>
