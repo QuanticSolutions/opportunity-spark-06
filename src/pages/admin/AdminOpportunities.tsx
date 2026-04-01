@@ -57,9 +57,14 @@ export default function AdminOpportunities() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Opportunity Management</h1>
-        <p className="text-sm text-muted-foreground">Manage all opportunities on the platform</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Opportunity Management</h1>
+          <p className="text-sm text-muted-foreground">Manage all opportunities on the platform</p>
+        </div>
+        <Button className="btn-gradient" onClick={() => navigate("/admin/opportunities/create")}>
+          <Plus size={18} className="mr-1" /> Create Opportunity
+        </Button>
       </div>
 
       <Card>
