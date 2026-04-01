@@ -66,6 +66,14 @@ export default function Opportunities() {
     return opps.filter(o => o.status !== "deleted").length < postingLimit;
   };
 
+  const limitMessage = () => {
+    if (!subApproved) return "Subscription pending approval";
+    if (postingLimit !== null && opps.filter(o => o.status !== "deleted").length >= postingLimit) {
+      return "You have reached your plan limit. Upgrade to continue posting.";
+    }
+    return null;
+  };
+
   const toggleStatus = async (id: string, current: string) => {
     const newStatus = current === "active" || current === "approved" ? "inactive" : "active";
     await supabase.from("opportunities").update({ status: newStatus }).eq("id", id);
