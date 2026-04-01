@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 
 export default function AdminOpportunities() {
+  const navigate = useNavigate();
   const [opps, setOpps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
