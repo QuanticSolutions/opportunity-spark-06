@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_logs: {
         Row: {
           action: string
@@ -526,6 +564,8 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
           id: string
           payment_status: string
           plan_id: string
@@ -533,6 +573,8 @@ export type Database = {
           receipt_url: string | null
           renewal_date: string | null
           status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           updated_at: string
         }
         Insert: {
@@ -540,6 +582,8 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
           id?: string
           payment_status?: string
           plan_id: string
@@ -547,6 +591,8 @@ export type Database = {
           receipt_url?: string | null
           renewal_date?: string | null
           status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -554,6 +600,8 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
           id?: string
           payment_status?: string
           plan_id?: string
@@ -561,6 +609,8 @@ export type Database = {
           receipt_url?: string | null
           renewal_date?: string | null
           status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -660,6 +710,8 @@ export type Database = {
           name: string
           posting_limit: number | null
           price_monthly: number
+          stripe_price_id: string | null
+          stripe_product_id: string | null
           tier: number
         }
         Insert: {
@@ -670,6 +722,8 @@ export type Database = {
           name: string
           posting_limit?: number | null
           price_monthly?: number
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
           tier?: number
         }
         Update: {
@@ -680,6 +734,8 @@ export type Database = {
           name?: string
           posting_limit?: number | null
           price_monthly?: number
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
           tier?: number
         }
         Relationships: []

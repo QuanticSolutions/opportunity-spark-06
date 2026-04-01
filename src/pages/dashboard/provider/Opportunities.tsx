@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Pencil, Trash2, Eye, EyeOff, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import OpportunityFormDialog from "@/components/dashboard/provider/OpportunityFormDialog";
 import WhatHappensNext from "@/components/WhatHappensNext";
+import { logActivity } from "@/lib/activity-logger";
 
 const statusStyles: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -65,6 +66,14 @@ export default function Opportunities() {
     return opps.filter(o => o.status !== "deleted").length < postingLimit;
   };
 
+  const limitMessage = () => {
+    if (!subApproved) return "Subscription pending approval";
+    if (postingLimit !== null && opps.filter(o => o.status !== "deleted").length >= postingLimit) {
+      return "You have reached your plan limit. Upgrade to continue posting.";
+    }
+    return null;
+  };
+
   const toggleStatus = async (id: string, current: string) => {
     const newStatus = current === "active" || current === "approved" ? "inactive" : "active";
     await supabase.from("opportunities").update({ status: newStatus }).eq("id", id);
@@ -113,7 +122,8 @@ export default function Opportunities() {
             {postingLimit ? `${activeOpps.length} / ${postingLimit} used` : "Unlimited postings"}
           </p>
         </div>
-        <Button className="btn-gradient rounded-lg font-semibold" disabled={!canPost()} onClick={openCreate}>
+        <Button className="btn-gradient rounded-lg font-semibold" disabled={!canPost()} onClick={openCreate} title={limitMessage() || undefined}>
+          {!canPost() && <Lock size={16} className="mr-1" />}
           <Plus size={18} className="mr-1" /> New Opportunity
         </Button>
       </div>
@@ -122,6 +132,14 @@ export default function Opportunities() {
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="py-4 text-sm text-amber-800">
             ⏳ Your subscription is pending admin approval. Opportunity posting will be unlocked once approved.
+          </CardContent>
+        </Card>
+      )}
+
+      {subApproved && limitMessage() && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="py-4 text-sm text-destructive flex items-center gap-2">
+            <Lock size={16} /> {limitMessage()}
           </CardContent>
         </Card>
       )}

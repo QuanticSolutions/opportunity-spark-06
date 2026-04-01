@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Plus } from "lucide-react";
 
 export default function AdminOpportunities() {
+  const navigate = useNavigate();
   const [opps, setOpps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -54,9 +57,14 @@ export default function AdminOpportunities() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Opportunity Management</h1>
-        <p className="text-sm text-muted-foreground">Manage all opportunities on the platform</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Opportunity Management</h1>
+          <p className="text-sm text-muted-foreground">Manage all opportunities on the platform</p>
+        </div>
+        <Button className="btn-gradient" onClick={() => navigate("/admin/opportunities/create")}>
+          <Plus size={18} className="mr-1" /> Create Opportunity
+        </Button>
       </div>
 
       <Card>
