@@ -130,6 +130,8 @@ const App = () => (
               <Route path="providers" element={<AdminProviders />} />
               <Route path="subscriptions" element={<AdminSubscriptions />} />
               <Route path="content" element={<AdminContentManagement />} />
+              <Route path="opportunities" element={<AdminRoute requiredRole="editor"><AdminOpportunities /></AdminRoute>} />
+              <Route path="opportunities/create" element={<AdminRoute requiredRole="editor"><AdminCreateOpportunity /></AdminRoute>} />
               <Route path="submissions" element={<AdminSubmissions />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="settings" element={<AdminRoute requiredRole="admin"><AdminSettings /></AdminRoute>} />
