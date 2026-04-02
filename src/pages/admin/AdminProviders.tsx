@@ -38,6 +38,7 @@ interface ProviderRow {
 const PAGE_SIZE = 8;
 
 export default function AdminProviders() {
+  const navigate = useNavigate();
   const [providers, setProviders] = useState<ProviderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
