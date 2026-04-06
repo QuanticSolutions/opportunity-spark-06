@@ -9,6 +9,13 @@ export interface Profile {
   role: AppRole;
   country: string | null;
   bio: string | null;
+  email: string | null;
+  phone: string | null;
+  organization_name: string | null;
+  organization_type: string | null;
+  city: string | null;
+  website: string | null;
+  linkedin: string | null;
   created_at: string;
   updated_at: string;
 }
