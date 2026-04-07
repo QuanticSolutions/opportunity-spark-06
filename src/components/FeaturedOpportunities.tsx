@@ -6,6 +6,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import DOMPurify from "dompurify";
+
+function SafeHTML({ html }: { html: string }) {
+  return (
+    <div
+      className="prose prose-sm max-w-none text-muted-foreground line-clamp-2"
+      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+    />
+  );
+}
+
 
 export default function FeaturedOpportunities() {
   const navigate = useNavigate();
@@ -94,9 +105,7 @@ export default function FeaturedOpportunities() {
                     )}
                   </div>
 
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 flex-1">
-                    {opp.description}
-                  </p>
+                  <SafeHTML html={opp.description || ""} />
 
                   <Button
                     size="sm"
