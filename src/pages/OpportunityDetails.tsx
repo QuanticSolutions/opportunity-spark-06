@@ -356,8 +356,6 @@ export default function OpportunityDetails() {
     </div>
   );
 }
-  const tags: string[] = opp.tags || [];
-  const isDeadlineSoon = opp.deadline && (new Date(opp.deadline).getTime() - Date.now()) < 7 * 24 * 60 * 60 * 1000;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
