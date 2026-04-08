@@ -202,36 +202,56 @@ export default function OpportunitiesBrowse() {
                 {filtered.map((opp, i) => (
                   <motion.div key={opp.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                     <Card className="glow-border group cursor-pointer transition-shadow hover:shadow-[var(--card-shadow-hover)]" onClick={() => navigate(`/opportunities/${opp.id}`)}>
-                      <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="min-w-0 flex-1 space-y-1.5">
-                          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors truncate">{opp.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {opp.company && <>{opp.company} · </>}
-                            {opp.location || "Remote"}
-                            {opp.deadline && <> · Due {new Date(opp.deadline).toLocaleDateString()}</>}
-                          </p>
-                          <div className="flex flex-wrap gap-2 items-center">
-                            <Badge className={categoryColors[opp.category] || "bg-muted text-muted-foreground"}>
-                              {opp.category}
-                            </Badge>
-                            <Badge className={workModeColors[opp.work_mode] || "bg-muted text-muted-foreground"}>
-                              {opp.work_mode}
-                            </Badge>
-                            {opp.stipend_min != null && opp.stipend_max != null && (
-                              <Badge variant="outline" className="text-xs">
-                                {opp.currency} {opp.stipend_min.toLocaleString()}–{opp.stipend_max.toLocaleString()}
-                              </Badge>
-                            )}
-                            <DeadlineCountdown deadline={opp.deadline} />
+                      <CardContent className="p-5 flex flex-col gap-4 group cursor-pointer transition-shadow hover:shadow-md" onClick={() => navigate(`/opportunities/${opp.id}`)}>
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="min-w-0 flex-1 space-y-1.5">
+                            {/* Title with line-clamp to prevent vertical overflow, truncate for horizontal */}
+                            <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 sm:truncate">
+                              {opp.title}
+                            </h3>
+                            <p className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-1">
+                              {opp.company && <span className="font-medium text-foreground/80">{opp.company}</span>}
+                              {opp.company && <span>•</span>}
+                              <span>{opp.location || "Remote"}</span>
+                            </p>
+                          </div>
+                          {/* Keep the Save button at the top right for easy access on mobile */}
+                          <div className="shrink-0">
+                            <SaveOpportunityButton opportunityId={opp.id} />
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0 items-center">
-                          <SaveOpportunityButton opportunityId={opp.id} />
-                          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/opportunities/${opp.id}`); }}>
+
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <Badge className={`${categoryColors[opp.category] || "bg-muted text-muted-foreground"} capitalize`}>
+                            {opp.category}
+                          </Badge>
+                          <Badge className={`${workModeColors[opp.work_mode] || "bg-muted text-muted-foreground"} capitalize`}>
+                            {opp.work_mode}
+                          </Badge>
+                          {opp.stipend_min != null && (
+                            <Badge variant="outline" className="text-xs">
+                              {opp.currency} {opp.stipend_min.toLocaleString()}
+                            </Badge>
+                          )}
+                          <DeadlineCountdown deadline={opp.deadline} />
+                        </div>
+
+                        {/* Action Buttons: Stack on mobile, row on small screens */}
+                        <div className="flex flex-col xs:flex-row gap-2 mt-2 sm:mt-0 sm:ml-auto">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full sm:w-auto"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/opportunities/${opp.id}`); }}
+                          >
                             View Details
                           </Button>
                           {opp.external_link && (
-                            <Button size="sm" className="btn-gradient" onClick={(e) => { e.stopPropagation(); window.open(opp.external_link, "_blank"); }}>
+                            <Button
+                              size="sm"
+                              className="btn-gradient w-full sm:w-auto"
+                              onClick={(e) => { e.stopPropagation(); window.open(opp.external_link, "_blank"); }}
+                            >
                               Apply <ExternalLink size={14} className="ml-1" />
                             </Button>
                           )}
