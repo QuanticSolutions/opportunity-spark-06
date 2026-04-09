@@ -70,7 +70,7 @@ export default function RichTextEditor({
   // Sync external value changes
   useEffect(() => {
     if (editor && value !== undefined && editor.getHTML() !== value && value !== "") {
-      editor.commands.setContent(value, false);
+      editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [value, editor]);
 
