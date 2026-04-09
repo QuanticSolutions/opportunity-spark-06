@@ -6,19 +6,20 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Underline from "@tiptap/extension-underline";
 import {
   Bold, Italic, Underline as UnderlineIcon, List, ListOrdered,
-  Quote, AlignLeft, AlignCenter, AlignRight, Link as LinkIcon, Type,
+  Quote, AlignLeft, AlignCenter, AlignRight, Link as LinkIcon,
 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 interface RichTextEditorProps {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
   maxLength?: number;
+  minHeight?: string;
 }
 
 export default function RichTextEditor({
@@ -26,21 +27,38 @@ export default function RichTextEditor({
   onChange,
   placeholder = "Write a short professional bio...",
   maxLength,
+  minHeight = "120px",
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        bulletList: { keepMarks: true },
-        orderedList: { keepMarks: true },
+        bulletList: {
+          keepMarks: true,
+          HTMLAttributes: { class: "list-disc pl-6 space-y-1" },
+        },
+        orderedList: {
+          keepMarks: true,
+          HTMLAttributes: { class: "list-decimal pl-6 space-y-1" },
+        },
+        heading: {
+          levels: [1, 2, 3],
+          HTMLAttributes: {},
+        },
+        blockquote: {
+          HTMLAttributes: { class: "border-l-4 border-primary/30 pl-4 italic text-muted-foreground" },
+        },
+        listItem: {
+          HTMLAttributes: { class: "ml-1" },
+        },
       }),
       Underline,
-      Link.configure({ openOnClick: false }),
+      Link.configure({ openOnClick: false, HTMLAttributes: { class: "text-primary underline" } }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Placeholder.configure({ placeholder }),
     ],
-    content: value,
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
+    content: value || "",
+    onUpdate: ({ editor: ed }) => {
+      const html = ed.getHTML();
       if (html === "<p></p>") {
         onChange("");
       } else {
@@ -48,6 +66,13 @@ export default function RichTextEditor({
       }
     },
   });
+
+  // Sync external value changes
+  useEffect(() => {
+    if (editor && value !== undefined && editor.getHTML() !== value && value !== "") {
+      editor.commands.setContent(value, { emitUpdate: false });
+    }
+  }, [value, editor]);
 
   const setLink = useCallback(() => {
     if (!editor) return;
@@ -145,7 +170,8 @@ export default function RichTextEditor({
       {/* Editor */}
       <EditorContent
         editor={editor}
-        className="prose prose-sm max-w-none px-3 py-2 min-h-[120px] max-h-[300px] overflow-y-auto focus:outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[100px] [&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground [&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0"
+        className={`rich-text-content px-3 py-2 max-h-[500px] overflow-y-auto focus:outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground [&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0`}
+        style={{ minHeight }}
       />
 
       {maxLength && (
