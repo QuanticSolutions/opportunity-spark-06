@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   SummarySection, DescriptionSection, EligibilitySection,
   BenefitsSection, ApplicationProcessSection, StipendTagsSection,
+  RequiredDocumentsSection,
   emptyFormData, type OpportunityFormData,
 } from "@/components/opportunity/OpportunityFormSections";
 
@@ -126,6 +127,7 @@ export default function OpportunityFormDialog({ open, onOpenChange, editOpp, can
           <EligibilitySection form={form} onChange={handleChange} />
           <BenefitsSection form={form} onChange={handleChange} />
           <ApplicationProcessSection form={form} onChange={handleChange} />
+          <RequiredDocumentsSection form={form} onChange={handleChange} />
           <StipendTagsSection form={form} onChange={handleChange} />
 
           <div className="flex gap-3">

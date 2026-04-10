@@ -14,6 +14,7 @@ import { Plus, Pencil, Loader2 } from "lucide-react";
 import {
   SummarySection, DescriptionSection, EligibilitySection,
   BenefitsSection, ApplicationProcessSection, StipendTagsSection,
+  RequiredDocumentsSection,
   emptyFormData, type OpportunityFormData,
 } from "@/components/opportunity/OpportunityFormSections";
 
@@ -199,6 +200,7 @@ export default function AdminOpportunities() {
             <EligibilitySection form={form} onChange={handleChange} />
             <BenefitsSection form={form} onChange={handleChange} />
             <ApplicationProcessSection form={form} onChange={handleChange} />
+            <RequiredDocumentsSection form={form} onChange={handleChange} />
             <StipendTagsSection form={form} onChange={handleChange} />
           </div>
           <DialogFooter>
