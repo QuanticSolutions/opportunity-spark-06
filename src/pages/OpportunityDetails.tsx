@@ -312,7 +312,7 @@ export default function OpportunityDetails() {
 
             {/* Internal application form - only for non-external categories */}
             {opp.allow_internal_apply && !isExternalCategory && (
-              <ApplicationForm opportunityId={opp.id} opportunityTitle={opp.title} />
+              <ApplicationForm opportunityId={opp.id} opportunityTitle={opp.title} requiredDocuments={(opp as any).required_documents || []} />
             )}
           </div>
 
