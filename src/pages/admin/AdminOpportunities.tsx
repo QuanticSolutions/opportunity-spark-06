@@ -14,6 +14,7 @@ import { Plus, Pencil, Loader2 } from "lucide-react";
 import {
   SummarySection, DescriptionSection, EligibilitySection,
   BenefitsSection, ApplicationProcessSection, StipendTagsSection,
+  RequiredDocumentsSection,
   emptyFormData, type OpportunityFormData,
 } from "@/components/opportunity/OpportunityFormSections";
 
@@ -78,6 +79,7 @@ export default function AdminOpportunities() {
       stipend_max: opp.stipend_max?.toString() || "",
       currency: opp.currency || "USD",
       tags: opp.tags || [],
+      required_documents: opp.required_documents || [],
     });
     setEditOpen(true);
   };
@@ -104,7 +106,8 @@ export default function AdminOpportunities() {
       stipend_max: form.stipend_max ? Number(form.stipend_max) : null,
       currency: form.currency,
       tags: form.tags,
-    }).eq("id", editOpp.id);
+      required_documents: form.required_documents,
+    } as any).eq("id", editOpp.id);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -197,6 +200,7 @@ export default function AdminOpportunities() {
             <EligibilitySection form={form} onChange={handleChange} />
             <BenefitsSection form={form} onChange={handleChange} />
             <ApplicationProcessSection form={form} onChange={handleChange} />
+            <RequiredDocumentsSection form={form} onChange={handleChange} />
             <StipendTagsSection form={form} onChange={handleChange} />
           </div>
           <DialogFooter>

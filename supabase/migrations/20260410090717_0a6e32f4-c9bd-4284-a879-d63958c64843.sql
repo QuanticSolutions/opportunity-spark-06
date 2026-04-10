@@ -1,0 +1,1 @@
+ALTER TABLE public.opportunities ADD COLUMN required_documents text[] DEFAULT '{}'::text[];

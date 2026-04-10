@@ -14,20 +14,28 @@ import { logError } from "@/lib/error-logger";
 interface Props {
   opportunityId: string;
   opportunityTitle: string;
+  requiredDocuments?: string[];
 }
 
-export default function ApplicationForm({ opportunityId, opportunityTitle }: Props) {
+export default function ApplicationForm({ opportunityId, opportunityTitle, requiredDocuments = [] }: Props) {
   const { user } = useAuth();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const generalFileRef = useRef<HTMLInputElement>(null);
   const [coverLetter, setCoverLetter] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  // For required documents: map of doc name -> File | null
+  const [requiredFiles, setRequiredFiles] = useState<Record<string, File | null>>(
+    () => Object.fromEntries(requiredDocuments.map((d) => [d, null]))
+  );
+  // For additional general files (when no required docs specified)
+  const [generalFiles, setGeneralFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const hasRequiredDocs = requiredDocuments.length > 0;
+
+  const handleRequiredFileChange = (docName: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
     const validation = validateFile(f);
@@ -35,13 +43,26 @@ export default function ApplicationForm({ opportunityId, opportunityTitle }: Pro
       toast({ title: "Invalid file", description: validation.error, variant: "destructive" });
       return;
     }
-    setFiles((prev) => [...prev, f]);
+    setRequiredFiles((prev) => ({ ...prev, [docName]: f }));
     setUploadError(null);
-    if (fileRef.current) fileRef.current.value = "";
+    e.target.value = "";
   };
 
-  const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+  const handleGeneralFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const validation = validateFile(f);
+    if (!validation.valid) {
+      toast({ title: "Invalid file", description: validation.error, variant: "destructive" });
+      return;
+    }
+    setGeneralFiles((prev) => [...prev, f]);
+    setUploadError(null);
+    if (generalFileRef.current) generalFileRef.current.value = "";
+  };
+
+  const removeGeneralFile = (index: number) => {
+    setGeneralFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
@@ -50,13 +71,30 @@ export default function ApplicationForm({ opportunityId, opportunityTitle }: Pro
       return;
     }
 
+    // Collect all files to upload
+    const allFiles: { file: File; label: string }[] = [];
+
+    if (hasRequiredDocs) {
+      for (const docName of requiredDocuments) {
+        const file = requiredFiles[docName];
+        if (!file) {
+          toast({ title: `"${docName}" is required`, description: "Please upload all required documents.", variant: "destructive" });
+          return;
+        }
+        allFiles.push({ file, label: docName });
+      }
+    }
+
+    for (const file of generalFiles) {
+      allFiles.push({ file, label: file.name });
+    }
+
     setSubmitting(true);
-    setUploading(files.length > 0);
+    setUploading(allFiles.length > 0);
     setUploadError(null);
     setUploadProgress(0);
 
     try {
-      // 1. Create application record
       const { data: app, error: insertError } = await supabase
         .from("applications")
         .insert({
@@ -69,28 +107,16 @@ export default function ApplicationForm({ opportunityId, opportunityTitle }: Pro
 
       if (insertError) throw insertError;
 
-      // 2. Upload files if any
-      if (files.length > 0) {
-        const totalFiles = files.length;
-        let completedFiles = 0;
-
-        for (const file of files) {
+      if (allFiles.length > 0) {
+        let completed = 0;
+        for (const { file, label } of allFiles) {
           const filePath = `${user.id}/${Date.now()}-${file.name}`;
           const result = await uploadFileWithRetry("resumes", filePath, file);
 
           if (!result.success) {
-            setUploadError(result.error || "Upload failed. Please try again.");
-            toast({
-              title: "Upload failed",
-              description: `Failed to upload "${file.name}". ${result.error}`,
-              variant: "destructive",
-            });
-            logError(new Error(result.error), {
-              component: "ApplicationForm",
-              action: "file_upload",
-              fileName: file.name,
-              opportunityId,
-            });
+            setUploadError(result.error || "Upload failed.");
+            toast({ title: "Upload failed", description: `Failed to upload "${label}".`, variant: "destructive" });
+            logError(new Error(result.error), { component: "ApplicationForm", action: "file_upload", fileName: file.name, opportunityId });
             setSubmitting(false);
             setUploading(false);
             return;
@@ -103,8 +129,8 @@ export default function ApplicationForm({ opportunityId, opportunityTitle }: Pro
             file_type: fileType,
           } as any);
 
-          completedFiles++;
-          setUploadProgress(Math.round((completedFiles / totalFiles) * 100));
+          completed++;
+          setUploadProgress(Math.round((completed / allFiles.length) * 100));
         }
       }
 
@@ -115,7 +141,7 @@ export default function ApplicationForm({ opportunityId, opportunityTitle }: Pro
       if (err.code === "23505") {
         toast({ title: "Already applied", description: "You have already applied to this opportunity.", variant: "destructive" });
       } else {
-        const msg = err.message || "Something went wrong. Please try again.";
+        const msg = err.message || "Something went wrong.";
         setUploadError(msg);
         toast({ title: "Error submitting application", description: msg, variant: "destructive" });
         logError(err, { component: "ApplicationForm", action: "submit", opportunityId });
@@ -166,46 +192,82 @@ export default function ApplicationForm({ opportunityId, opportunityTitle }: Pro
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Documents <span className="text-muted-foreground text-xs">(Optional — PDF, DOC, DOCX — max 5MB each)</span></Label>
-          <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} className="hidden" />
-
-          {files.length > 0 && (
-            <div className="space-y-2">
-              {files.map((file, i) => (
-                <div key={i} className="flex items-center gap-3 rounded-lg border border-border p-3">
-                  <FileText size={18} className="text-primary shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => removeFile(i)} disabled={submitting}>
-                    <X size={14} />
-                  </Button>
+        {/* Required document upload fields */}
+        {hasRequiredDocs && (
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">Required Documents</Label>
+            {requiredDocuments.map((docName) => {
+              const file = requiredFiles[docName];
+              return (
+                <div key={docName} className="space-y-1.5">
+                  <Label className="text-sm">{docName} <span className="text-destructive">*</span></Label>
+                  {file ? (
+                    <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+                      <FileText size={18} className="text-primary shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => setRequiredFiles((prev) => ({ ...prev, [docName]: null }))} disabled={submitting}>
+                        <X size={14} />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border p-4 transition-colors hover:border-primary/50 hover:bg-accent/50 ${submitting ? "opacity-50 cursor-not-allowed" : ""}`}>
+                      <Upload size={20} className="text-muted-foreground shrink-0" />
+                      <p className="text-sm text-muted-foreground">Click to upload {docName}</p>
+                      <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => handleRequiredFileChange(docName, e)} className="hidden" disabled={submitting} />
+                    </label>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-
-          <div
-            onClick={() => !submitting && fileRef.current?.click()}
-            className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border p-4 transition-colors hover:border-primary/50 hover:bg-accent/50 ${submitting ? "opacity-50 cursor-not-allowed" : ""}`}
-          >
-            <Upload size={20} className="text-muted-foreground shrink-0" />
-            <p className="text-sm text-muted-foreground">Click to upload documents</p>
+              );
+            })}
           </div>
+        )}
 
-          {uploading && <Progress value={uploadProgress} className="h-2" />}
+        {/* General file upload (when no required docs) */}
+        {!hasRequiredDocs && (
+          <div className="space-y-1.5">
+            <Label>Documents <span className="text-muted-foreground text-xs">(Optional — PDF, DOC, DOCX — max 5MB each)</span></Label>
+            <input ref={generalFileRef} type="file" accept=".pdf,.doc,.docx" onChange={handleGeneralFileChange} className="hidden" />
 
-          {uploadError && (
-            <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3">
-              <p className="text-sm text-destructive flex-1">{uploadError}</p>
-              <Button variant="outline" size="sm" onClick={handleSubmit} className="shrink-0">
-                <RefreshCw size={14} className="mr-1" /> Retry
-              </Button>
+            {generalFiles.length > 0 && (
+              <div className="space-y-2">
+                {generalFiles.map((file, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-lg border border-border p-3">
+                    <FileText size={18} className="text-primary shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => removeGeneralFile(i)} disabled={submitting}>
+                      <X size={14} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div
+              onClick={() => !submitting && generalFileRef.current?.click()}
+              className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border p-4 transition-colors hover:border-primary/50 hover:bg-accent/50 ${submitting ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <Upload size={20} className="text-muted-foreground shrink-0" />
+              <p className="text-sm text-muted-foreground">Click to upload documents</p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {uploading && <Progress value={uploadProgress} className="h-2" />}
+
+        {uploadError && (
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3">
+            <p className="text-sm text-destructive flex-1">{uploadError}</p>
+            <Button variant="outline" size="sm" onClick={handleSubmit} className="shrink-0">
+              <RefreshCw size={14} className="mr-1" /> Retry
+            </Button>
+          </div>
+        )}
 
         <Button
           onClick={handleSubmit}

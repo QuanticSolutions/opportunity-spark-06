@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   SummarySection, DescriptionSection, EligibilitySection,
   BenefitsSection, ApplicationProcessSection, StipendTagsSection,
+  RequiredDocumentsSection,
   emptyFormData, type OpportunityFormData,
 } from "@/components/opportunity/OpportunityFormSections";
 
@@ -44,6 +45,7 @@ export default function OpportunityFormDialog({ open, onOpenChange, editOpp, can
         stipend_max: editOpp.stipend_max?.toString() || "",
         currency: editOpp.currency || "USD",
         tags: editOpp.tags || [],
+        required_documents: editOpp.required_documents || [],
       });
     } else {
       setForm(emptyFormData);
@@ -80,6 +82,7 @@ export default function OpportunityFormDialog({ open, onOpenChange, editOpp, can
         stipend_max: form.stipend_max ? Number(form.stipend_max) : null,
         currency: form.currency || "USD",
         tags: form.tags,
+        required_documents: form.required_documents,
       };
 
       if (editOpp) {
@@ -124,6 +127,7 @@ export default function OpportunityFormDialog({ open, onOpenChange, editOpp, can
           <EligibilitySection form={form} onChange={handleChange} />
           <BenefitsSection form={form} onChange={handleChange} />
           <ApplicationProcessSection form={form} onChange={handleChange} />
+          <RequiredDocumentsSection form={form} onChange={handleChange} />
           <StipendTagsSection form={form} onChange={handleChange} />
 
           <div className="flex gap-3">

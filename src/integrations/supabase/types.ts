@@ -466,6 +466,7 @@ export type Database = {
           location: string | null
           official_website: string | null
           provider_id: string | null
+          required_documents: string[] | null
           requirements: string | null
           status: string
           stipend_max: number | null
@@ -497,6 +498,7 @@ export type Database = {
           location?: string | null
           official_website?: string | null
           provider_id?: string | null
+          required_documents?: string[] | null
           requirements?: string | null
           status?: string
           stipend_max?: number | null
@@ -528,6 +530,7 @@ export type Database = {
           location?: string | null
           official_website?: string | null
           provider_id?: string | null
+          required_documents?: string[] | null
           requirements?: string | null
           status?: string
           stipend_max?: number | null

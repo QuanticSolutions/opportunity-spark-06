@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import {
   SummarySection, DescriptionSection, EligibilitySection,
   BenefitsSection, ApplicationProcessSection, StipendTagsSection,
+  RequiredDocumentsSection,
   emptyFormData, type OpportunityFormData,
 } from "@/components/opportunity/OpportunityFormSections";
 
@@ -51,6 +52,7 @@ export default function AdminCreateOpportunity() {
         currency: form.currency,
         allow_internal_apply: true,
         tags: form.tags,
+        required_documents: form.required_documents,
         status,
         provider_id: user?.id || null,
         is_verified: true,
@@ -94,6 +96,7 @@ export default function AdminCreateOpportunity() {
         <EligibilitySection form={form} onChange={handleChange} />
         <BenefitsSection form={form} onChange={handleChange} />
         <ApplicationProcessSection form={form} onChange={handleChange} />
+        <RequiredDocumentsSection form={form} onChange={handleChange} />
         <StipendTagsSection form={form} onChange={handleChange} />
       </div>
 
