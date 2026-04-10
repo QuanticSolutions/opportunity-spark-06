@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import RichTextEditor from "@/components/RichTextEditor";
-import { Plus, X, GripVertical, FileText, CheckCircle, ListChecks, Gift, Route } from "lucide-react";
+import { Plus, X, GripVertical, FileText, CheckCircle, ListChecks, Gift, Route, Paperclip } from "lucide-react";
 
 const categories = ["job", "internship", "scholarship", "fellowship", "grant", "competition", "volunteer"];
 const workModes = ["onsite", "remote", "hybrid"];
@@ -31,6 +32,7 @@ export interface OpportunityFormData {
   stipend_max: string;
   currency: string;
   tags: string[];
+  required_documents: string[];
 }
 
 export const emptyFormData: OpportunityFormData = {
@@ -38,6 +40,7 @@ export const emptyFormData: OpportunityFormData = {
   compensation: "", location: "", official_website: "", work_mode: "onsite",
   description: "", eligibility: [], benefits: "", application_steps: [],
   external_link: "", stipend_min: "", stipend_max: "", currency: "USD", tags: [],
+  required_documents: [],
 };
 
 interface SectionProps {
@@ -292,6 +295,90 @@ export function ApplicationProcessSection({ form, onChange }: SectionProps) {
           <Plus size={14} /> Add Step
         </Button>
       </CardContent>
+    </Card>
+  );
+}
+
+// ─── Section 6: Required Documents ────────────────────────────────────────
+export function RequiredDocumentsSection({ form, onChange }: SectionProps) {
+  const [enabled, setEnabled] = useState(form.required_documents.length > 0);
+  const [docInput, setDocInput] = useState("");
+
+  const toggleEnabled = (checked: boolean) => {
+    setEnabled(checked);
+    if (!checked) {
+      onChange("required_documents", []);
+    }
+  };
+
+  const addDoc = () => {
+    const val = docInput.trim();
+    if (val && !form.required_documents.includes(val)) {
+      onChange("required_documents", [...form.required_documents, val]);
+    }
+    setDocInput("");
+  };
+
+  const removeDoc = (idx: number) => {
+    onChange("required_documents", form.required_documents.filter((_, i) => i !== idx));
+  };
+
+  const handleKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") { e.preventDefault(); addDoc(); }
+  };
+
+  return (
+    <Card className="border-border/60 shadow-sm">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Paperclip size={16} />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Required Documents</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">Specify documents applicants must upload</p>
+            </div>
+          </div>
+          <Switch checked={enabled} onCheckedChange={toggleEnabled} />
+        </div>
+      </CardHeader>
+      {enabled && (
+        <CardContent className="space-y-3">
+          <div className="flex gap-2">
+            <Input
+              value={docInput}
+              onChange={(e) => setDocInput(e.target.value)}
+              onKeyDown={handleKey}
+              placeholder="e.g., Resume, Transcript, Recommendation Letter"
+              className="flex-1"
+            />
+            <Button type="button" variant="outline" onClick={addDoc} className="gap-1 shrink-0">
+              <Plus size={14} /> Add
+            </Button>
+          </div>
+          {form.required_documents.length > 0 && (
+            <div className="space-y-2">
+              {form.required_documents.map((doc, idx) => (
+                <div key={idx} className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 group">
+                  <FileText size={14} className="text-primary shrink-0" />
+                  <span className="flex-1 text-sm">{doc}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeDoc(idx)}
+                    className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {form.required_documents.length === 0 && (
+            <p className="text-xs text-muted-foreground italic">No documents added yet. Add at least one document name.</p>
+          )}
+        </CardContent>
+      )}
     </Card>
   );
 }
