@@ -51,6 +51,7 @@ export default function AdminCreateOpportunity() {
         currency: form.currency,
         allow_internal_apply: true,
         tags: form.tags,
+        required_documents: form.required_documents,
         status,
         provider_id: user?.id || null,
         is_verified: true,

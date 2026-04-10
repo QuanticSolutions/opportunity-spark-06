@@ -44,6 +44,7 @@ export default function OpportunityFormDialog({ open, onOpenChange, editOpp, can
         stipend_max: editOpp.stipend_max?.toString() || "",
         currency: editOpp.currency || "USD",
         tags: editOpp.tags || [],
+        required_documents: editOpp.required_documents || [],
       });
     } else {
       setForm(emptyFormData);
@@ -80,6 +81,7 @@ export default function OpportunityFormDialog({ open, onOpenChange, editOpp, can
         stipend_max: form.stipend_max ? Number(form.stipend_max) : null,
         currency: form.currency || "USD",
         tags: form.tags,
+        required_documents: form.required_documents,
       };
 
       if (editOpp) {

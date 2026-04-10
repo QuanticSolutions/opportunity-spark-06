@@ -78,6 +78,7 @@ export default function AdminOpportunities() {
       stipend_max: opp.stipend_max?.toString() || "",
       currency: opp.currency || "USD",
       tags: opp.tags || [],
+      required_documents: opp.required_documents || [],
     });
     setEditOpen(true);
   };
@@ -104,7 +105,8 @@ export default function AdminOpportunities() {
       stipend_max: form.stipend_max ? Number(form.stipend_max) : null,
       currency: form.currency,
       tags: form.tags,
-    }).eq("id", editOpp.id);
+      required_documents: form.required_documents,
+    } as any).eq("id", editOpp.id);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
