@@ -277,43 +277,80 @@ export default function OpportunityDetails() {
               </Card>
             )}
 
-            {/* Apply Section - Big buttons */}
-            <Card className="glass-card">
-              <CardContent className="p-6">
-                <h2 className="mb-4 text-lg font-bold text-foreground">Apply for this Opportunity</h2>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {isExternalCategory && opp.external_link ? (
-                    <Button
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-bold text-lg py-6"
-                      onClick={() => window.open(opp.external_link, "_blank")}
-                    >
-                      APPLY NOW
-                    </Button>
-                  ) : opp.allow_internal_apply ? null : (
-                    <Button
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-bold text-lg py-6"
-                      onClick={() => opp.external_link ? window.open(opp.external_link, "_blank") : null}
-                      disabled={!opp.external_link}
-                    >
-                      APPLY NOW
-                    </Button>
-                  )}
-                  {opp.official_website && (
-                    <Button
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-bold text-lg py-6"
-                      onClick={() => window.open(opp.official_website, "_blank")}
-                    >
-                      OFFICIAL LINK
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Apply Section - Dynamic based on required documents */}
+            {(() => {
+              const requiredDocs: string[] = (opp as any).required_documents || [];
+              const hasRequiredDocs = requiredDocs.length > 0;
 
-            {/* Internal application form - only for non-external categories */}
-            {opp.allow_internal_apply && !isExternalCategory && (
-              <ApplicationForm opportunityId={opp.id} opportunityTitle={opp.title} requiredDocuments={(opp as any).required_documents || []} />
-            )}
+              if (hasRequiredDocs) {
+                // Has required documents → show full application form with doc uploads
+                return (
+                  <ApplicationForm
+                    opportunityId={opp.id}
+                    opportunityTitle={opp.title}
+                    requiredDocuments={requiredDocs}
+                  />
+                );
+              }
+
+              // No required documents → show Apply Now / Official Link buttons
+              const showInternalApply = opp.allow_internal_apply && !isExternalCategory;
+              const showExternalLink = !!(opp.external_link || opp.official_website);
+
+              return (
+                <>
+                  <Card className="glass-card">
+                    <CardContent className="p-6">
+                      <h2 className="mb-4 text-lg font-bold text-foreground">Apply for this Opportunity</h2>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {showExternalLink && (
+                          <>
+                            {opp.external_link && (
+                              <Button
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-bold text-lg py-6"
+                                onClick={() => window.open(opp.external_link, "_blank")}
+                              >
+                                <ExternalLink size={18} className="mr-2" /> APPLY NOW
+                              </Button>
+                            )}
+                            {opp.official_website && (
+                              <Button
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-bold text-lg py-6"
+                                onClick={() => window.open(opp.official_website, "_blank")}
+                              >
+                                <Globe size={18} className="mr-2" /> OFFICIAL LINK
+                              </Button>
+                            )}
+                          </>
+                        )}
+                        {!showExternalLink && showInternalApply && (
+                          <Button
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-bold text-lg py-6 sm:col-span-2"
+                            onClick={() => {
+                              const formEl = document.getElementById("internal-apply-form");
+                              if (formEl) formEl.scrollIntoView({ behavior: "smooth" });
+                            }}
+                          >
+                            APPLY NOW
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Internal application form (no required docs) */}
+                  {showInternalApply && (
+                    <div id="internal-apply-form">
+                      <ApplicationForm
+                        opportunityId={opp.id}
+                        opportunityTitle={opp.title}
+                        requiredDocuments={[]}
+                      />
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           {/* Sidebar */}
