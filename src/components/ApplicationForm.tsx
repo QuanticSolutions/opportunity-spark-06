@@ -1,10 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Upload, FileText, CheckCircle, Loader2, X, RefreshCw } from "lucide-react";
+import { Upload, FileText, CheckCircle, Loader2, X, RefreshCw, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -21,19 +21,30 @@ export default function ApplicationForm({ opportunityId, opportunityTitle, requi
   const { user } = useAuth();
   const generalFileRef = useRef<HTMLInputElement>(null);
   const [coverLetter, setCoverLetter] = useState("");
-  // For required documents: map of doc name -> File | null
   const [requiredFiles, setRequiredFiles] = useState<Record<string, File | null>>(
     () => Object.fromEntries(requiredDocuments.map((d) => [d, null]))
   );
-  // For additional general files (when no required docs specified)
   const [generalFiles, setGeneralFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   const hasRequiredDocs = requiredDocuments.length > 0;
+
+  // Check if all required documents are uploaded
+  const allRequiredUploaded = useMemo(() => {
+    if (!hasRequiredDocs) return true;
+    return requiredDocuments.every((doc) => requiredFiles[doc] !== null);
+  }, [hasRequiredDocs, requiredDocuments, requiredFiles]);
+
+  // Count uploaded required docs
+  const uploadedCount = useMemo(() => {
+    if (!hasRequiredDocs) return 0;
+    return requiredDocuments.filter((doc) => requiredFiles[doc] !== null).length;
+  }, [hasRequiredDocs, requiredDocuments, requiredFiles]);
 
   const handleRequiredFileChange = (docName: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -71,17 +82,17 @@ export default function ApplicationForm({ opportunityId, opportunityTitle, requi
       return;
     }
 
-    // Collect all files to upload
+    if (hasRequiredDocs && !allRequiredUploaded) {
+      toast({ title: "Missing documents", description: "Please upload all required documents before submitting.", variant: "destructive" });
+      return;
+    }
+
     const allFiles: { file: File; label: string }[] = [];
 
     if (hasRequiredDocs) {
       for (const docName of requiredDocuments) {
         const file = requiredFiles[docName];
-        if (!file) {
-          toast({ title: `"${docName}" is required`, description: "Please upload all required documents.", variant: "destructive" });
-          return;
-        }
-        allFiles.push({ file, label: docName });
+        if (file) allFiles.push({ file, label: docName });
       }
     }
 
@@ -176,34 +187,65 @@ export default function ApplicationForm({ opportunityId, opportunityTitle, requi
     );
   }
 
+  // Step-based flow for required documents
+  if (hasRequiredDocs && !showForm) {
+    return (
+      <Card className="glow-border">
+        <CardContent className="py-6 text-center space-y-4">
+          <FileText size={36} className="mx-auto text-primary" />
+          <h3 className="text-lg font-bold text-foreground">Apply for this Opportunity</h3>
+          <p className="text-sm text-muted-foreground">
+            This opportunity requires {requiredDocuments.length} document{requiredDocuments.length > 1 ? "s" : ""} to be uploaded.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {requiredDocuments.map((doc) => (
+              <span key={doc} className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                <FileText size={12} /> {doc}
+              </span>
+            ))}
+          </div>
+          <Button onClick={() => setShowForm(true)} className="btn-gradient rounded-lg font-semibold text-base py-5 px-8">
+            Apply for this Opportunity
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="glow-border">
       <CardHeader>
-        <CardTitle className="text-lg">Apply for this Opportunity</CardTitle>
+        <CardTitle className="text-lg">
+          {hasRequiredDocs ? "Upload Required Documents & Submit" : "Apply for this Opportunity"}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-1.5">
-          <Label>Cover Letter <span className="text-muted-foreground text-xs">(Optional)</span></Label>
-          <Textarea
-            rows={5}
-            value={coverLetter}
-            onChange={(e) => setCoverLetter(e.target.value)}
-            placeholder="Tell us why you're a great fit..."
-          />
-        </div>
-
         {/* Required document upload fields */}
         {hasRequiredDocs && (
           <div className="space-y-3">
-            <Label className="text-sm font-semibold">Required Documents</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold">Required Documents</Label>
+              <span className="text-xs text-muted-foreground">
+                {uploadedCount}/{requiredDocuments.length} uploaded
+              </span>
+            </div>
+            <Progress value={(uploadedCount / requiredDocuments.length) * 100} className="h-2" />
+
             {requiredDocuments.map((docName) => {
               const file = requiredFiles[docName];
               return (
                 <div key={docName} className="space-y-1.5">
-                  <Label className="text-sm">{docName} <span className="text-destructive">*</span></Label>
+                  <Label className="text-sm flex items-center gap-1">
+                    {file ? (
+                      <CheckCircle size={14} className="text-emerald-500" />
+                    ) : (
+                      <AlertCircle size={14} className="text-destructive" />
+                    )}
+                    {docName}
+                  </Label>
                   {file ? (
-                    <div className="flex items-center gap-3 rounded-lg border border-border p-3">
-                      <FileText size={18} className="text-primary shrink-0" />
+                    <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3">
+                      <FileText size={18} className="text-emerald-600 shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
                         <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
@@ -215,15 +257,36 @@ export default function ApplicationForm({ opportunityId, opportunityTitle, requi
                   ) : (
                     <label className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border p-4 transition-colors hover:border-primary/50 hover:bg-accent/50 ${submitting ? "opacity-50 cursor-not-allowed" : ""}`}>
                       <Upload size={20} className="text-muted-foreground shrink-0" />
-                      <p className="text-sm text-muted-foreground">Click to upload {docName}</p>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Click to upload {docName}</p>
+                        <p className="text-xs text-muted-foreground">PDF, DOC, DOCX — max 5MB</p>
+                      </div>
                       <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => handleRequiredFileChange(docName, e)} className="hidden" disabled={submitting} />
                     </label>
                   )}
                 </div>
               );
             })}
+
+            {!allRequiredUploaded && (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/50 p-3">
+                <AlertCircle size={16} className="text-amber-600 shrink-0" />
+                <p className="text-sm text-amber-700">Please upload all required documents to submit your application.</p>
+              </div>
+            )}
           </div>
         )}
+
+        {/* Cover letter - always optional */}
+        <div className="space-y-1.5">
+          <Label>Cover Letter <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+          <Textarea
+            rows={5}
+            value={coverLetter}
+            onChange={(e) => setCoverLetter(e.target.value)}
+            placeholder="Tell us why you're a great fit..."
+          />
+        </div>
 
         {/* General file upload (when no required docs) */}
         {!hasRequiredDocs && (
@@ -271,10 +334,16 @@ export default function ApplicationForm({ opportunityId, opportunityTitle, requi
 
         <Button
           onClick={handleSubmit}
-          disabled={submitting}
+          disabled={submitting || (hasRequiredDocs && !allRequiredUploaded)}
           className="btn-gradient w-full rounded-lg font-semibold text-base py-5"
         >
-          {submitting ? <><Loader2 size={16} className="mr-2 animate-spin" /> Submitting...</> : "Submit Application"}
+          {submitting ? (
+            <><Loader2 size={16} className="mr-2 animate-spin" /> Submitting...</>
+          ) : hasRequiredDocs && !allRequiredUploaded ? (
+            `Upload all documents to submit (${uploadedCount}/${requiredDocuments.length})`
+          ) : (
+            "Submit Application"
+          )}
         </Button>
       </CardContent>
     </Card>
