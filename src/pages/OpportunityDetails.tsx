@@ -518,6 +518,55 @@ export default function OpportunityDetails() {
                       </div>
                     </div>
                   )}
+                  {/* Official Website - Copy Link */}
+                  {opp.official_website && (
+                    <div className="flex items-start gap-2 text-sm">
+                      <Globe size={16} className="text-muted-foreground shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-muted-foreground">Official Website</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <a href={opp.official_website} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline truncate text-xs">
+                            {opp.official_website}
+                          </a>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(opp.official_website);
+                              toast({ title: "Official link copied!" });
+                            }}
+                            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                            title="Copy official link"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* External Link - Copy Link */}
+                  {opp.external_link && opp.external_link !== opp.official_website && (
+                    <div className="flex items-start gap-2 text-sm">
+                      <ExternalLink size={16} className="text-muted-foreground shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-muted-foreground">Application Link</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <a href={opp.external_link} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline truncate text-xs">
+                            {opp.external_link}
+                          </a>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(opp.external_link);
+                              toast({ title: "Application link copied!" });
+                            }}
+                            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                            title="Copy application link"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Separator />

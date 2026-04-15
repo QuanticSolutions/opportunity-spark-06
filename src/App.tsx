@@ -36,6 +36,7 @@ import SavedJobs from "./pages/dashboard/seeker/SavedJobs";
 import Notifications from "./pages/dashboard/seeker/Notifications";
 import ProfileInfo from "./pages/dashboard/seeker/ProfileInfo";
 import PasswordSecurity from "./pages/dashboard/seeker/PasswordSecurity";
+import SeekerMessages from "./pages/dashboard/seeker/Messages";
 
 // Provider dashboard
 import ProviderLayout from "./components/dashboard/provider/ProviderLayout";
@@ -109,6 +110,7 @@ const App = () => (
               <Route path="applied-jobs" element={<AppliedJobs />} />
               <Route path="saved-jobs" element={<SavedJobs />} />
               <Route path="notifications" element={<Notifications />} />
+              <Route path="messages" element={<SeekerMessages />} />
               <Route path="profile" element={<ProfileInfo />} />
               <Route path="security" element={<PasswordSecurity />} />
             </Route>
