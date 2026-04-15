@@ -6,6 +6,7 @@ import {
   FileCheck,
   Bookmark,
   Bell,
+  Inbox,
   User,
   Lock,
   ChevronLeft,
@@ -33,6 +34,7 @@ const navItems: NavItem[] = [
     ],
   },
   { label: "Notifications", icon: Bell, path: "/dashboard/seeker/notifications" },
+  { label: "Messages", icon: Inbox, path: "/dashboard/seeker/messages" },
   { label: "Profile", icon: User, path: "/dashboard/seeker/profile" },
   { label: "Security", icon: Lock, path: "/dashboard/seeker/security" },
 ];
