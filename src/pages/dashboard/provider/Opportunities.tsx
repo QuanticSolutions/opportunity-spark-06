@@ -31,6 +31,7 @@ export default function Opportunities() {
   const [editOpp, setEditOpp] = useState<any | null>(null);
   const [postingLimit, setPostingLimit] = useState<number | null>(null);
   const [subApproved, setSubApproved] = useState(false);
+  const [subExpired, setSubExpired] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -41,11 +42,15 @@ export default function Opportunities() {
   const fetchSubscription = async () => {
     const { data } = await supabase
       .from("provider_subscriptions")
-      .select("status, subscription_plans(posting_limit)")
+      .select("status, current_period_end, subscription_plans(posting_limit)")
       .eq("provider_id", user!.id)
       .single();
     if (data) {
-      setSubApproved(data.status === "approved" || data.status === "active");
+      const expired =
+        data.status === "expired" ||
+        (data.current_period_end && new Date(data.current_period_end) <= new Date());
+      setSubExpired(!!expired);
+      setSubApproved((data.status === "approved" || data.status === "active") && !expired);
       setPostingLimit((data.subscription_plans as any)?.posting_limit ?? null);
     }
   };
@@ -61,12 +66,14 @@ export default function Opportunities() {
   };
 
   const canPost = () => {
+    if (subExpired) return false;
     if (!subApproved) return false;
     if (postingLimit === null) return true;
     return opps.filter(o => o.status !== "deleted").length < postingLimit;
   };
 
   const limitMessage = () => {
+    if (subExpired) return "Your subscription has expired. Renew to continue posting.";
     if (!subApproved) return "Subscription pending approval";
     if (postingLimit !== null && opps.filter(o => o.status !== "deleted").length >= postingLimit) {
       return "You have reached your plan limit. Upgrade to continue posting.";
