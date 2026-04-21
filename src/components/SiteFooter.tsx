@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Facebook, Linkedin, Mail, MapPin, Send, MessageCircle } from "lucide-react";
+import { useFooterSettings } from "@/hooks/useFooterSettings";
 
 const opportunities = [
   { label: "Scholarships", href: "/opportunities?category=scholarship" },
@@ -17,24 +18,11 @@ const company = [
   { label: "Hire Talent", href: "/hire-talent" },
 ];
 
-const support = [
-  { label: "Help Center", href: "/contact" },
-  { label: "Contact Us", href: "/contact" },
-  { label: "FAQs", href: "/contact" },
-  { label: "Privacy Policy", href: "/privacy" },
-  { label: "Terms of Service", href: "/terms" },
-];
-
 const socials = [
   { icon: Linkedin, href: "https://so.linkedin.com/company/somopportunity", label: "LinkedIn" },
   { icon: Facebook, href: "https://www.facebook.com/share/1Cb4M76mHC/?mibextid=wwXIfr", label: "Facebook" },
   { icon: Send, href: "https://t.me/somopportunity", label: "Telegram" },
   { icon: MessageCircle, href: "https://whatsapp.com/channel/0029VbBXKMvDzgTFfwjIEO2n", label: "WhatsApp" },
-];
-
-const contacts = [
-  { icon: Mail, label: "Email", value: "somopportunity@gmail.com", href: "mailto:somopportunity@gmail.com" },
-  { icon: MapPin, label: "Location", value: "Hargeisa, Somaliland", href: "#" },
 ];
 
 function FooterLinkColumn({ title, links }: { title: string; links: { label: string; href: string }[] }) {
@@ -60,13 +48,33 @@ function FooterLinkColumn({ title, links }: { title: string; links: { label: str
 
 export default function SiteFooter() {
   const navigate = useNavigate();
+  const { settings } = useFooterSettings();
+
+  const support = [
+    { label: "Help Center", href: "/contact" },
+    { label: "Contact Us", href: "/contact" },
+    { label: "FAQs", href: "/contact" },
+    { label: "Privacy Policy", href: settings.privacy_url },
+    { label: "Terms of Service", href: settings.terms_url },
+  ];
+
+  const contacts = [
+    { icon: Mail, label: "Email", value: settings.email, href: `mailto:${settings.email}` },
+    { icon: MapPin, label: "Location", value: settings.location, href: "#" },
+  ];
+
+  const copyrightText = settings.copyright.replace("{year}", String(new Date().getFullYear()));
+
+  const bottomLinks = [
+    { label: "Privacy Policy", href: settings.privacy_url },
+    { label: "Terms of Service", href: settings.terms_url },
+    { label: "Cookie Policy", href: settings.cookie_url },
+  ];
 
   return (
     <footer style={{ background: "var(--footer-gradient)" }}>
-      {/* Main columns */}
       <div className="container py-16">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
-          {/* Branding */}
           <div>
             <div className="flex items-center gap-2.5 mb-4">
               <div className="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center">
@@ -101,20 +109,14 @@ export default function SiteFooter() {
         </div>
       </div>
 
-      {/* Divider */}
       <div className="container">
         <div className="border-t border-white/10" />
       </div>
 
-      {/* Contact row */}
       <div className="container py-8">
         <div className="grid gap-6 sm:grid-cols-3">
           {contacts.map((c, i) => (
-            <a
-              key={`${c.label}-${i}`}
-              href={c.href}
-              className="flex items-center gap-3 group"
-            >
+            <a key={`${c.label}-${i}`} href={c.href} className="flex items-center gap-3 group">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition-colors group-hover:bg-primary">
                 <c.icon className="h-4 w-4" />
               </div>
@@ -127,23 +129,15 @@ export default function SiteFooter() {
         </div>
       </div>
 
-      {/* Divider */}
       <div className="container">
         <div className="border-t border-white/10" />
       </div>
 
-      {/* Copyright */}
       <div className="container py-6">
         <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
-          <p className="text-xs text-slate-400">
-            © {new Date().getFullYear()} SomOpportunity. All rights reserved.
-          </p>
+          <p className="text-xs text-slate-400">{copyrightText}</p>
           <div className="flex items-center gap-6">
-            {[
-              { label: "Privacy Policy", href: "/privacy" },
-              { label: "Terms of Service", href: "/terms" },
-              { label: "Cookie Policy", href: "/privacy" },
-            ].map((t) => (
+            {bottomLinks.map((t) => (
               <button
                 key={t.label}
                 onClick={() => navigate(t.href)}
