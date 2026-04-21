@@ -125,7 +125,22 @@ export default function SiteHeader() {
   );
 
   const NavButton = ({ label, href }: { label: string; href: string }) => {
-    const isActive = window.location.pathname === href || (href !== "/" && window.location.pathname.startsWith(href.split("?")[0]));
+    const path = window.location.pathname;
+    const search = window.location.search;
+    const fullUrl = path + search;
+    const [hrefPath, hrefQuery] = href.split("?");
+
+    let isActive = false;
+    if (hrefQuery) {
+      // Link has a query (e.g. /opportunities?category=job) — only active on exact match
+      isActive = fullUrl === href || fullUrl.startsWith(href + "&");
+    } else if (href === "/") {
+      isActive = path === "/";
+    } else {
+      // Active on exact path with no category param (so /opportunities won't highlight Jobs)
+      isActive = path === hrefPath && !search.includes("category=");
+    }
+
     return (
       <button
         onClick={() => navigate(href)}
@@ -140,6 +155,11 @@ export default function SiteHeader() {
       </button>
     );
   };
+
+  // Opportunities dropdown active when on /opportunities (any category except job-only)
+  const path = window.location.pathname;
+  const search = window.location.search;
+  const oppDropdownActive = path.startsWith("/opportunities") && !(path === "/opportunities" && search === "?category=job");
 
   return (
     <>
@@ -180,7 +200,9 @@ export default function SiteHeader() {
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
-                      <NavigationMenuTrigger className="text-sm font-medium text-muted-foreground hover:text-foreground bg-transparent hover:bg-accent/50 rounded-lg h-auto py-2 px-3">
+                      <NavigationMenuTrigger className={`text-sm font-medium bg-transparent hover:bg-accent/50 rounded-lg h-auto py-2 px-3 ${
+                        oppDropdownActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                      }`}>
                         Services
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
