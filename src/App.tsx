@@ -62,6 +62,7 @@ import AdminCreateOpportunity from "./pages/admin/AdminCreateOpportunity";
 import AdminProviderDetail from "./pages/admin/AdminProviderDetail";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminPages from "./pages/admin/AdminPages";
+import AdminFooterSettings from "./pages/admin/AdminFooterSettings";
 import ArticleDetail from "./pages/ArticleDetail";
 
 // Auth pages
@@ -142,6 +143,7 @@ const App = () => (
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="settings" element={<AdminRoute requiredRole="admin"><AdminSettings /></AdminRoute>} />
               <Route path="pages" element={<AdminRoute requiredRole="admin"><AdminPages /></AdminRoute>} />
+              <Route path="footer" element={<AdminRoute requiredRole="admin"><AdminFooterSettings /></AdminRoute>} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
