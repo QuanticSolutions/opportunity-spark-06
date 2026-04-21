@@ -892,6 +892,7 @@ export type Database = {
         Args: { opp_id: string }
         Returns: undefined
       }
+      process_subscription_expiry: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "seeker" | "provider" | "admin" | "editor" | "viewer"
