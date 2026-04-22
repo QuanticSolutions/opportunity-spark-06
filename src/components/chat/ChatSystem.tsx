@@ -200,19 +200,29 @@ export default function ChatSystem() {
 
   const sendMessage = async () => {
     if (!draft.trim() || !activePartnerId || !user) return;
+
     setSending(true);
+    const messageBody = draft.trim();
     const subject = activeConv?.lastMessage.subject || "Conversation";
-    const { error } = await supabase.from("messages").insert({
-      sender_id: user.id,
-      recipient_id: activePartnerId,
-      subject,
-      body: draft.trim(),
-    });
+
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({
+        sender_id: user.id,
+        recipient_id: activePartnerId,
+        subject,
+        body: messageBody,
+      })
+      .select("*")
+      .single();
+
     if (error) {
       toast({ title: "Failed to send", description: error.message, variant: "destructive" });
     } else {
       setDraft("");
+      handleIncoming(data);
     }
+
     setSending(false);
   };
 
