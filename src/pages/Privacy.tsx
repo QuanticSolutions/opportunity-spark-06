@@ -5,8 +5,6 @@ import DOMPurify from "dompurify";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
-const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } };
-
 const defaultContent = `<h2>Privacy Policy</h2><p>This Privacy Policy explains how Somopportunity collects, uses, and discloses your information when you use our platform.</p>`;
 
 export default function Privacy() {
@@ -44,10 +42,9 @@ export default function Privacy() {
 
         <section className="py-16 md:py-24">
           <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ staggerChildren: 0.06 }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
             className="container max-w-3xl"
           >
             {loading ? (
@@ -55,8 +52,7 @@ export default function Privacy() {
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
               </div>
             ) : (
-              <motion.div
-                variants={fadeUp}
+              <div
                 className="rich-text-rendered text-foreground"
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
               />
