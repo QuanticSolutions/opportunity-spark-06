@@ -156,6 +156,9 @@
 .rich-text-content .ProseMirror,
 .rich-text-rendered {
   line-height: 1.7;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .rich-text-content .ProseMirror h1,
 .rich-text-rendered h1 {
@@ -230,4 +233,25 @@
 .rich-text-content .ProseMirror u,
 .rich-text-rendered u {
   text-decoration: underline;
+}
+.rich-text-content .ProseMirror > *:first-child,
+.rich-text-rendered > *:first-child {
+  margin-top: 0;
+}
+.rich-text-content .ProseMirror > *:last-child,
+.rich-text-rendered > *:last-child {
+  margin-bottom: 0;
+}
+.rich-text-content .ProseMirror img,
+.rich-text-rendered img,
+.rich-text-content .ProseMirror iframe,
+.rich-text-rendered iframe {
+  max-width: 100%;
+  height: auto;
+}
+.rich-text-content .ProseMirror table,
+.rich-text-rendered table {
+  width: 100%;
+  display: block;
+  overflow-x: auto;
 }
