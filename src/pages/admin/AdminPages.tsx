@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Save, FileText, Shield } from "lucide-react";
 import RichTextEditor from "@/components/RichTextEditor";
+import { title } from "process";
 
 interface SitePage {
   id: string;
@@ -46,6 +47,7 @@ export default function AdminPages() {
     const { error } = await supabase
       .from("site_pages")
       .update({
+        title: slug === "terms" ? "Terms of Service" : "Privacy Policy",
         content: drafts[slug] || "",
         updated_by: user?.id,
         updated_at: new Date().toISOString(),
