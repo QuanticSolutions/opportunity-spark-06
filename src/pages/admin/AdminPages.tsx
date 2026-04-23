@@ -34,7 +34,7 @@ export default function AdminPages() {
       .order("slug");
     if (!error && data) {
       setPages(data as SitePage[]);
-      const d: Record<string, string> = {};
+      const d: Record<string, string> = { terms: "", privacy: "" };
       data.forEach((p: any) => { d[p.slug] = p.content || ""; });
       setDrafts(d);
     }
@@ -45,12 +45,14 @@ export default function AdminPages() {
     setSaving(slug);
     const { error } = await supabase
       .from("site_pages")
-      .update({
+      .upsert({
+        slug,
+        title: slug === "terms" ? "Terms of Service" : "Privacy Policy",
         content: drafts[slug] || "",
         updated_by: user?.id,
         updated_at: new Date().toISOString(),
       } as any)
-      .eq("slug", slug);
+      .select();
 
     if (error) {
       toast({ title: "Error saving", description: error.message, variant: "destructive" });
