@@ -50,7 +50,17 @@ export default function Opportunities() {
   };
 
   const activeOpps = useMemo(() => opps.filter(o => o.status !== "deleted"), [opps]);
-  const hasReachedPostingLimit = postingLimit !== null && activeOpps.length >= postingLimit;
+  const postsUsedThisPeriod = useMemo(() => {
+    if (!subscription?.current_period_start) return activeOpps.length;
+
+    const cycleStart = new Date(subscription.current_period_start).getTime();
+    return activeOpps.filter((opp) => {
+      if (!opp.created_at) return true;
+      return new Date(opp.created_at).getTime() >= cycleStart;
+    }).length;
+  }, [activeOpps, subscription?.current_period_start]);
+
+  const hasReachedPostingLimit = postingLimit !== null && postsUsedThisPeriod >= postingLimit;
   const isPendingReview = Boolean(subscription && !isExpired && !isActive);
   const canPost = Boolean(subscription && isActive && !hasReachedPostingLimit);
 
@@ -161,7 +171,7 @@ export default function Opportunities() {
         <div>
           <h1 className="text-2xl font-extrabold text-foreground">Opportunities</h1>
           <p className="text-sm text-muted-foreground">
-            {postingLimit ? `${activeOpps.length} / ${postingLimit} used` : "Unlimited postings"}
+            {postingLimit ? `${postsUsedThisPeriod} / ${postingLimit} used this cycle` : "Unlimited postings"}
           </p>
         </div>
         <div className="flex items-center gap-2">
