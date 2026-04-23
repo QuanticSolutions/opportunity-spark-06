@@ -16,7 +16,7 @@ export default function Terms() {
       .from("site_pages")
       .select("content")
       .eq("slug", "terms")
-      .single()
+      .maybeSingle()
       .then(({ data }) => {
         setContent(data?.content || null);
         setLoading(false);
@@ -45,7 +45,7 @@ export default function Terms() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.28, ease: "easeOut" }}
-            className="container max-w-3xl"
+            className="container max-w-4xl"
           >
             {loading ? (
               <div className="flex justify-center py-12">

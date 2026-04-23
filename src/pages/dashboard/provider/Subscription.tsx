@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CreditCard, Check, ExternalLink, RefreshCw } from "lucide-react";
+import { CreditCard, Check, ExternalLink, RefreshCw, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,7 @@ export default function Subscription() {
   const [loading, setLoading] = useState(true);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [requestingReview, setRequestingReview] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -108,6 +109,50 @@ export default function Subscription() {
     }
   };
 
+  const handleRequestReview = async () => {
+    if (!user || !sub) return;
+
+    setRequestingReview(true);
+    try {
+      const requestReason = sub.status === "expired" ? "renewal_request" : "plan_change_request";
+      const nextStatus = sub.status === "expired" ? "pending_approval" : sub.status === "active" ? "under_review" : sub.status;
+
+      const { error: subError } = await supabase
+        .from("provider_subscriptions")
+        .update({ status: nextStatus })
+        .eq("id", sub.id);
+
+      if (subError) throw subError;
+
+      const [{ error: notificationError }, { error: auditError }] = await Promise.all([
+        supabase.from("admin_notifications").insert({
+          provider_id: user.id,
+          type: requestReason,
+          message: sub.status === "expired"
+            ? "A provider requested subscription renewal from the dashboard."
+            : "A provider requested a plan review from the dashboard.",
+        }),
+        supabase.from("subscription_audit_logs").insert({
+          subscription_id: sub.id,
+          action: requestReason,
+          notes: sub.status === "expired"
+            ? "Provider requested subscription renewal."
+            : "Provider requested a new plan or posting limit review.",
+        }),
+      ]);
+
+      if (notificationError) throw notificationError;
+      if (auditError) throw auditError;
+
+      toast({ title: "Request sent", description: "Admin has been notified and your subscription is now under review." });
+      await fetchData();
+    } catch (err: any) {
+      toast({ title: "Request failed", description: err.message, variant: "destructive" });
+    } finally {
+      setRequestingReview(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const config = statusConfig[status] || { label: status.replace(/_/g, " "), className: "bg-destructive/10 text-destructive" };
     return <Badge className={config.className}>{config.label}</Badge>;
@@ -130,6 +175,12 @@ export default function Subscription() {
             <Button variant="outline" size="sm" onClick={handleManage}>
               <ExternalLink size={16} className="mr-1" />
               Manage Billing
+            </Button>
+          )}
+          {sub && (sub.status === "expired" || sub.status === "active") && (
+            <Button variant="outline" size="sm" onClick={handleRequestReview} disabled={requestingReview}>
+              <LifeBuoy size={16} className="mr-1" />
+              {requestingReview ? "Sending…" : sub.status === "expired" ? "Request Renewal" : "Request Plan Review"}
             </Button>
           )}
         </div>
