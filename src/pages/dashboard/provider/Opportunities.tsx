@@ -92,7 +92,7 @@ export default function Opportunities() {
 
       if (updateError) throw updateError;
 
-      const [{ error: notificationError }, { error: auditError }, { error: adminLogError }] = await Promise.all([
+      const [{ error: notificationError }, { error: auditError }] = await Promise.all([
         supabase.from("admin_notifications").insert({
           provider_id: user.id,
           type: requestReason,
@@ -103,18 +103,10 @@ export default function Opportunities() {
           action: requestReason,
           notes: limitMessage || "Provider requested a subscription update.",
         }),
-        supabase.from("admin_logs").insert({
-          admin_id: user.id,
-          action: requestReason,
-          target_id: subscription.id,
-          target_type: "subscription",
-          details: { source: "provider_dashboard" },
-        }),
       ]);
 
       if (notificationError) throw notificationError;
       if (auditError) throw auditError;
-      if (adminLogError) throw adminLogError;
 
       await refetchSubscription();
       toast({
