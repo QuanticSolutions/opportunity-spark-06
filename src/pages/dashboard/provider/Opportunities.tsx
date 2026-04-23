@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Pencil, Trash2, Eye, EyeOff, Lock } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Lock, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import OpportunityFormDialog from "@/components/dashboard/provider/OpportunityFormDialog";
 import WhatHappensNext from "@/components/WhatHappensNext";
-import { logActivity } from "@/lib/activity-logger";
+import { useNavigate } from "react-router-dom";
+import { useProviderSubscription } from "@/hooks/useProviderSubscription";
 
 const statusStyles: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -25,35 +26,18 @@ const statusStyles: Record<string, string> = {
 
 export default function Opportunities() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [opps, setOpps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editOpp, setEditOpp] = useState<any | null>(null);
-  const [postingLimit, setPostingLimit] = useState<number | null>(null);
-  const [subApproved, setSubApproved] = useState(false);
-  const [subExpired, setSubExpired] = useState(false);
+  const [requestingRenewal, setRequestingRenewal] = useState(false);
+  const { subscription, isActive, isExpired, postingLimit, refetch: refetchSubscription } = useProviderSubscription();
 
   useEffect(() => {
     if (!user) return;
     fetchOpps();
-    fetchSubscription();
   }, [user]);
-
-  const fetchSubscription = async () => {
-    const { data } = await supabase
-      .from("provider_subscriptions")
-      .select("status, current_period_end, subscription_plans(posting_limit)")
-      .eq("provider_id", user!.id)
-      .single();
-    if (data) {
-      const expired =
-        data.status === "expired" ||
-        (data.current_period_end && new Date(data.current_period_end) <= new Date());
-      setSubExpired(!!expired);
-      setSubApproved((data.status === "approved" || data.status === "active") && !expired);
-      setPostingLimit((data.subscription_plans as any)?.posting_limit ?? null);
-    }
-  };
 
   const fetchOpps = async () => {
     const { data } = await supabase
@@ -65,20 +49,73 @@ export default function Opportunities() {
     setLoading(false);
   };
 
-  const canPost = () => {
-    if (subExpired) return false;
-    if (!subApproved) return false;
-    if (postingLimit === null) return true;
-    return opps.filter(o => o.status !== "deleted").length < postingLimit;
-  };
+  const activeOpps = useMemo(() => opps.filter(o => o.status !== "deleted"), [opps]);
+  const hasReachedPostingLimit = postingLimit !== null && activeOpps.length >= postingLimit;
+  const isPendingReview = Boolean(subscription && !isExpired && !isActive);
+  const canPost = Boolean(subscription && isActive && !hasReachedPostingLimit);
 
-  const limitMessage = () => {
-    if (subExpired) return "Your subscription has expired. Renew to continue posting.";
-    if (!subApproved) return "Subscription pending approval";
-    if (postingLimit !== null && opps.filter(o => o.status !== "deleted").length >= postingLimit) {
-      return "You have reached your plan limit. Upgrade to continue posting.";
+  const limitMessage = isExpired
+    ? "Your subscription has expired. Renew your plan to continue posting new opportunities."
+    : isPendingReview
+      ? "Your subscription is awaiting review. Posting will be restored once an admin approves it."
+      : hasReachedPostingLimit
+        ? "You have reached your current posting limit. Request a renewal or a new plan to keep posting."
+        : null;
+
+  const requestPlanUpdate = async () => {
+    if (!user || !subscription) return;
+    setRequestingRenewal(true);
+    try {
+      const requestReason = isExpired ? "renewal_request" : hasReachedPostingLimit ? "plan_change_request" : "subscription_update_request";
+      const adminMessage = isExpired
+        ? "A provider requested subscription renewal after expiration."
+        : hasReachedPostingLimit
+          ? "A provider reached the posting limit and requested a plan update."
+          : "A provider requested a subscription update.";
+
+      const nextStatus = isExpired ? "pending_approval" : subscription.status === "active" ? "under_review" : subscription.status;
+
+      const { error: updateError } = await supabase
+        .from("provider_subscriptions")
+        .update({ status: nextStatus, payment_status: isExpired ? "awaiting_payment" : subscription.payment_status })
+        .eq("id", subscription.id);
+
+      if (updateError) throw updateError;
+
+      const [{ error: notificationError }, { error: auditError }, { error: adminLogError }] = await Promise.all([
+        supabase.from("admin_notifications").insert({
+          provider_id: user.id,
+          type: requestReason,
+          message: adminMessage,
+        }),
+        supabase.from("subscription_audit_logs").insert({
+          subscription_id: subscription.id,
+          action: requestReason,
+          notes: limitMessage || "Provider requested a subscription update.",
+        }),
+        supabase.from("admin_logs").insert({
+          admin_id: user.id,
+          action: requestReason,
+          target_id: subscription.id,
+          target_type: "subscription",
+          details: { source: "provider_dashboard" },
+        }),
+      ]);
+
+      if (notificationError) throw notificationError;
+      if (auditError) throw auditError;
+      if (adminLogError) throw adminLogError;
+
+      await refetchSubscription();
+      toast({
+        title: "Request sent",
+        description: "Your renewal or plan request has been sent to admin for review.",
+      });
+    } catch (err: any) {
+      toast({ title: "Unable to send request", description: err.message, variant: "destructive" });
+    } finally {
+      setRequestingRenewal(false);
     }
-    return null;
   };
 
   const toggleStatus = async (id: string, current: string) => {
@@ -109,8 +146,6 @@ export default function Opportunities() {
     fetchOpps();
   };
 
-  const activeOpps = opps.filter(o => o.status !== "deleted");
-
   if (loading) {
     return (
       <div className="space-y-4">
@@ -129,13 +164,21 @@ export default function Opportunities() {
             {postingLimit ? `${activeOpps.length} / ${postingLimit} used` : "Unlimited postings"}
           </p>
         </div>
-        <Button className="btn-gradient rounded-lg font-semibold" disabled={!canPost()} onClick={openCreate} title={limitMessage() || undefined}>
-          {!canPost() && <Lock size={16} className="mr-1" />}
+        <div className="flex items-center gap-2">
+          {!canPost && subscription && (
+            <Button variant="outline" className="rounded-lg font-semibold" onClick={requestPlanUpdate} disabled={requestingRenewal}>
+              <RefreshCw size={16} className={`mr-1 ${requestingRenewal ? "animate-spin" : ""}`} />
+              {requestingRenewal ? "Sending…" : isExpired ? "Request Renewal" : "Request New Plan"}
+            </Button>
+          )}
+          <Button className="btn-gradient rounded-lg font-semibold" disabled={!canPost} onClick={openCreate} title={limitMessage || undefined}>
+            {!canPost && <Lock size={16} className="mr-1" />}
           <Plus size={18} className="mr-1" /> New Opportunity
-        </Button>
+          </Button>
+        </div>
       </div>
 
-      {!subApproved && (
+      {isPendingReview && (
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="py-4 text-sm text-amber-800">
             ⏳ Your subscription is pending admin approval. Opportunity posting will be unlocked once approved.
@@ -143,10 +186,18 @@ export default function Opportunities() {
         </Card>
       )}
 
-      {subApproved && limitMessage() && (
+      {limitMessage && (
         <Card className="border-destructive/30 bg-destructive/5">
-          <CardContent className="py-4 text-sm text-destructive flex items-center gap-2">
-            <Lock size={16} /> {limitMessage()}
+          <CardContent className="flex flex-col gap-3 py-4 text-sm text-destructive sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <Lock size={16} />
+              <span>{limitMessage}</span>
+            </div>
+            {subscription && (
+              <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => navigate("/dashboard/provider/subscription") }>
+                Manage Subscription
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -208,7 +259,8 @@ export default function Opportunities() {
         open={dialogOpen}
         onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditOpp(null); }}
         editOpp={editOpp}
-        canPost={canPost()}
+          canPost={canPost}
+          limitMessage={limitMessage}
         onSaved={handleSaved}
       />
 
