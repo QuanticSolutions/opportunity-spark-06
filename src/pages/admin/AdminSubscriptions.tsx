@@ -15,7 +15,7 @@ export default function AdminSubscriptions() {
     setLoading(true);
     const { data } = await supabase
       .from("provider_subscriptions")
-      .select("*, subscription_plans(name), profiles!provider_subscriptions_provider_id_fkey(full_name)")
+      .select("*, subscription_plans(name, display_name, posting_limit), profiles!provider_subscriptions_provider_id_fkey(full_name, email)")
       .order("created_at", { ascending: false });
     setSubs(data || []);
     setLoading(false);
@@ -27,10 +27,30 @@ export default function AdminSubscriptions() {
     const adminUser = (await supabase.auth.getUser()).data.user;
     const updates: any = { status };
     if (status === "active") {
-      console.log(status)
       updates.approved_by = adminUser?.id;
       updates.approved_at = new Date().toISOString();
       updates.status = "active";
+      updates.payment_status = "paid";
+
+      const now = new Date();
+      const sub = subs.find((item) => item.id === subId);
+      const cycleStart = sub?.status === "active" && sub?.current_period_end && new Date(sub.current_period_end) > now
+        ? new Date(sub.current_period_end)
+        : now;
+      const cycleEnd = new Date(cycleStart);
+      cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+
+      updates.current_period_start = cycleStart.toISOString();
+      updates.current_period_end = cycleEnd.toISOString();
+      updates.renewal_date = cycleEnd.toISOString();
+    }
+
+    if (status === "cancelled") {
+      updates.payment_status = "failed";
+    }
+
+    if (status === "under_review") {
+      updates.payment_status = "awaiting_payment";
     }
 
     const { error } = await supabase
@@ -63,7 +83,7 @@ export default function AdminSubscriptions() {
   const statusVariant = (status: string) => {
     switch (status) {
       case "active": return "default";
-      case "pending": case "pending_approval": return "secondary";
+      case "pending": case "pending_approval": case "under_review": return "secondary";
       case "expired": return "outline";
       case "cancelled": return "destructive";
       default: return "outline";
@@ -93,6 +113,7 @@ export default function AdminSubscriptions() {
                   <TableHead>Provider</TableHead>
                   <TableHead>Plan</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="hidden lg:table-cell">Cycle</TableHead>
                   <TableHead>Receipt</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Actions</TableHead>
@@ -108,6 +129,9 @@ export default function AdminSubscriptions() {
                     <TableCell>
                       <Badge variant={statusVariant(sub.status)}>{sub.status}</Badge>
                     </TableCell>
+                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                       {sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString() : "—"}
+                     </TableCell>
                     <TableCell>
                       {sub.receipt_url ? (
                         <a
@@ -127,7 +151,7 @@ export default function AdminSubscriptions() {
                       <div className="flex gap-1 flex-wrap">
                         {sub.status !== "active" && (
                           <Button size="sm" onClick={() => updateStatus(sub.id, sub.provider_id, "active")}>
-                            Approve
+                            {sub.status === "expired" ? "Renew" : "Approve"}
                           </Button>
                         )}
                         {sub.status !== "rejected" && sub.status !== "active" && (
@@ -135,9 +159,9 @@ export default function AdminSubscriptions() {
                             Reject
                           </Button>
                         )}
-                        {(sub.status === "pending" || sub.status === "pending_approval") && (
-                          <Button size="sm" variant="outline" onClick={() => updateStatus(sub.id, sub.provider_id, "pending")}>
-                            Mark Contacted
+                        {(sub.status === "pending" || sub.status === "pending_approval" || sub.status === "under_review") && (
+                          <Button size="sm" variant="outline" onClick={() => updateStatus(sub.id, sub.provider_id, "under_review")}>
+                            Mark Under Review
                           </Button>
                         )}
                       </div>
