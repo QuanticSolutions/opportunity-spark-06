@@ -16,9 +16,14 @@ export default function Privacy() {
       .from("site_pages")
       .select("content")
       .eq("slug", "privacy")
+      .order("updated_at", { ascending: false })
+      .limit(1)
       .maybeSingle()
       .then(({ data }) => {
         setContent(data?.content || null);
+        setLoading(false);
+      })
+      .catch(() => {
         setLoading(false);
       });
   }, []);

@@ -31,11 +31,15 @@ export default function AdminPages() {
       .from("site_pages")
       .select("*")
       .in("slug", ["terms", "privacy"])
-      .order("slug");
+      .order("updated_at", { ascending: false });
     if (!error && data) {
-      setPages(data as SitePage[]);
+      const latestPages = Array.from(
+        new Map((data as SitePage[]).map((page) => [page.slug, page])).values()
+      );
+
+      setPages(latestPages);
       const d: Record<string, string> = { terms: "", privacy: "" };
-      data.forEach((p: any) => { d[p.slug] = p.content || ""; });
+      latestPages.forEach((p) => { d[p.slug] = p.content || ""; });
       setDrafts(d);
     }
     setLoading(false);
@@ -43,16 +47,32 @@ export default function AdminPages() {
 
   const handleSave = async (slug: string) => {
     setSaving(slug);
-    const { error } = await supabase
+    const payload = {
+      title: slug === "terms" ? "Terms of Service" : "Privacy Policy",
+      content: drafts[slug] || "",
+      updated_by: user?.id,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: updatedRows, error: updateError } = await supabase
       .from("site_pages")
-      .upsert({
-        slug,
-        title: slug === "terms" ? "Terms of Service" : "Privacy Policy",
-        content: drafts[slug] || "",
-        updated_by: user?.id,
-        updated_at: new Date().toISOString(),
-      } as any)
+      .update(payload as any)
+      .eq("slug", slug)
       .select();
+
+    let error = updateError;
+
+    if (!updateError && (!updatedRows || updatedRows.length === 0)) {
+      const { error: insertError } = await supabase
+        .from("site_pages")
+        .insert({
+          slug,
+          ...payload,
+        } as any)
+        .select();
+
+      error = insertError;
+    }
 
     if (error) {
       toast({ title: "Error saving", description: error.message, variant: "destructive" });

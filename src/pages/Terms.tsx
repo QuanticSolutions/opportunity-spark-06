@@ -16,9 +16,14 @@ export default function Terms() {
       .from("site_pages")
       .select("content")
       .eq("slug", "terms")
+      .order("updated_at", { ascending: false })
+      .limit(1)
       .maybeSingle()
       .then(({ data }) => {
         setContent(data?.content || null);
+        setLoading(false);
+      })
+      .catch(() => {
         setLoading(false);
       });
   }, []);
