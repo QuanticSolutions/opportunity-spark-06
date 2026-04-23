@@ -8,6 +8,7 @@ interface ProviderSubscription {
   payment_status: string;
   plan_id: string;
   receipt_url: string | null;
+  current_period_start?: string | null;
   current_period_end?: string | null;
   renewal_date?: string | null;
   subscription_plans?: {
