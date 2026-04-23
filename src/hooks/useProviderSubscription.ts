@@ -8,7 +8,16 @@ interface ProviderSubscription {
   payment_status: string;
   plan_id: string;
   receipt_url: string | null;
-  subscription_plans?: any;
+  current_period_start?: string | null;
+  current_period_end?: string | null;
+  renewal_date?: string | null;
+  subscription_plans?: {
+    id: string;
+    name: string;
+    display_name: string;
+    posting_limit: number | null;
+    tier: number;
+  } | null;
 }
 
 export function useProviderSubscription() {
@@ -35,7 +44,15 @@ export function useProviderSubscription() {
     setLoading(false);
   };
 
-  const isActive = subscription?.status === "active";
+  const isExpired = Boolean(
+    subscription && (
+      subscription.status === "expired" ||
+      (subscription.current_period_end && new Date(subscription.current_period_end) <= new Date())
+    )
+  );
 
-  return { subscription, loading, isActive, refetch: fetchSub };
+  const isActive = subscription?.status === "active" && !isExpired;
+  const postingLimit = subscription?.subscription_plans?.posting_limit ?? null;
+
+  return { subscription, loading, isActive, isExpired, postingLimit, refetch: fetchSub };
 }

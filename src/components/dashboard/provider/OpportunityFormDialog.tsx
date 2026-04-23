@@ -16,10 +16,11 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   editOpp: any | null;
   canPost: boolean;
+  limitMessage?: string | null;
   onSaved: () => void;
 }
 
-export default function OpportunityFormDialog({ open, onOpenChange, editOpp, canPost, onSaved }: Props) {
+export default function OpportunityFormDialog({ open, onOpenChange, editOpp, canPost, limitMessage, onSaved }: Props) {
   const { user } = useAuth();
   const [form, setForm] = useState<OpportunityFormData>(emptyFormData);
   const [saving, setSaving] = useState(false);
@@ -94,7 +95,11 @@ export default function OpportunityFormDialog({ open, onOpenChange, editOpp, can
         toast({ title: asDraft ? "Saved as draft" : "Opportunity updated" });
       } else {
         if (!asDraft && !canPost) {
-          toast({ title: "Posting limit reached", description: "Upgrade your plan to post more.", variant: "destructive" });
+          toast({
+            title: "Posting unavailable",
+            description: limitMessage || "Your current subscription does not allow new postings right now.",
+            variant: "destructive",
+          });
           setSaving(false);
           return;
         }
