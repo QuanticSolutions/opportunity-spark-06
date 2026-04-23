@@ -12,15 +12,23 @@ export default function Privacy() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("site_pages")
-      .select("content")
-      .eq("slug", "privacy")
-      .maybeSingle()
-      .then(({ data }) => {
-        setContent(data?.content || null);
-        setLoading(false);
-      });
+    const loadPage = async () => {
+      const { data } = await supabase
+        .from("site_pages")
+        .select("content")
+        .eq("slug", "privacy")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      setContent(data?.content || null);
+      setLoading(false);
+    };
+
+    loadPage().catch(() => {
+      setContent(null);
+      setLoading(false);
+    });
   }, []);
 
   const html = content || defaultContent;
