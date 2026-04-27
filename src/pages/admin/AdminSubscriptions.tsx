@@ -17,7 +17,26 @@ export default function AdminSubscriptions() {
       .from("provider_subscriptions")
       .select("*, subscription_plans(name, display_name, posting_limit), profiles!provider_subscriptions_provider_id_fkey(full_name, email)")
       .order("created_at", { ascending: false });
-    setSubs(data || []);
+
+    const rows = data || [];
+
+    // Emails live in auth.users — fetch them via a SECURITY DEFINER helper (admin-only).
+    const providerIds = Array.from(new Set(rows.map((r: any) => r.provider_id).filter(Boolean)));
+    let emailMap = new Map<string, string>();
+    if (providerIds.length) {
+      const { data: emails } = await supabase.rpc("get_user_emails", { user_ids: providerIds });
+      (emails || []).forEach((e: any) => emailMap.set(e.id, e.email));
+    }
+
+    const merged = rows.map((r: any) => ({
+      ...r,
+      profiles: {
+        ...(r.profiles || {}),
+        email: emailMap.get(r.provider_id) || r.profiles?.email || null,
+      },
+    }));
+
+    setSubs(merged);
     setLoading(false);
   };
 
