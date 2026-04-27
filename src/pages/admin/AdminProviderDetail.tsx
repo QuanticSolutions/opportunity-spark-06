@@ -73,7 +73,7 @@ export default function AdminProviderDetail() {
 
   const statusColor = (s: string) => {
     if (s === "active") return "bg-emerald-100 text-emerald-700 border-emerald-200";
-    if (s === "pending") return "bg-amber-100 text-amber-700 border-amber-200";
+    if (s === "pending_approval" || s === "under_review") return "bg-amber-100 text-amber-700 border-amber-200";
     return "bg-red-100 text-red-700 border-red-200";
   };
 

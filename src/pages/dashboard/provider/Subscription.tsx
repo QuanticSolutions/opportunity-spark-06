@@ -13,9 +13,14 @@ import { logActivity } from "@/lib/activity-logger";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   active: { label: "Active", className: "bg-emerald-100 text-emerald-700" },
+  pending_approval: { label: "Pending Approval", className: "bg-amber-100 text-amber-700" },
+  under_review: { label: "Under Review", className: "bg-amber-100 text-amber-700" },
+  pending_payment: { label: "Pending Payment", className: "bg-amber-100 text-amber-700" },
   pending: { label: "Pending", className: "bg-amber-100 text-amber-700" },
+  rejected: { label: "Rejected", className: "bg-destructive/10 text-destructive" },
+  inactive: { label: "Inactive", className: "bg-destructive/10 text-destructive" },
   expired: { label: "Expired", className: "bg-destructive/10 text-destructive" },
-  cancelled: { label: "Cancelled", className: "bg-destructive/10 text-destructive" },
+  past_due: { label: "Past Due", className: "bg-destructive/10 text-destructive" },
 };
 
 export default function Subscription() {
@@ -110,7 +115,7 @@ export default function Subscription() {
     setRequestingReview(true);
     try {
       const requestReason = sub.status === "expired" ? "renewal_request" : "plan_change_request";
-      const nextStatus = sub.status === "expired" ? "pending" : sub.status === "active" ? "pending" : sub.status;
+      const nextStatus = sub.status === "expired" ? "pending_approval" : sub.status === "active" ? "under_review" : sub.status;
 
       const { error: subError } = await supabase
         .from("provider_subscriptions")
