@@ -142,7 +142,12 @@ export default function AdminSubscriptions() {
                 {subs.map((sub) => (
                   <TableRow key={sub.id}>
                     <TableCell className="font-medium">
-                      {(sub.profiles as any)?.full_name || "—"}
+                      <div>{(sub.profiles as any)?.full_name || "—"}</div>
+                      {(sub.profiles as any)?.email && (
+                        <div className="text-xs text-muted-foreground font-normal">
+                          {(sub.profiles as any).email}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>{sub.subscription_plans?.name || "—"}</TableCell>
                     <TableCell>
