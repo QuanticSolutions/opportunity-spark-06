@@ -83,7 +83,7 @@ export default function Opportunities() {
           ? "A provider reached the posting limit and requested a plan update."
           : "A provider requested a subscription update.";
 
-      const nextStatus = isExpired ? "pending_approval" : subscription.status === "active" ? "under_review" : subscription.status;
+      const nextStatus = isExpired ? "pending" : subscription.status === "active" ? "pending" : subscription.status;
 
       const { error: updateError } = await supabase
         .from("provider_subscriptions")
