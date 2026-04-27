@@ -154,7 +154,7 @@ export default function AdminSubscriptions() {
                             {sub.status === "expired" ? "Renew" : "Approve"}
                           </Button>
                         )}
-                        {sub.status !== "rejected" && sub.status !== "active" && (
+                        {sub.status !== "cancelled" && sub.status !== "active" && (
                           <Button size="sm" variant="destructive" onClick={() => updateStatus(sub.id, sub.provider_id, "cancelled")}>
                             Reject
                           </Button>
