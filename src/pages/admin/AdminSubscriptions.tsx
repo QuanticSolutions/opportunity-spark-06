@@ -183,8 +183,8 @@ export default function AdminSubscriptions() {
                             Reject
                           </Button>
                         )}
-                        {(sub.status === "pending" || sub.status === "pending_approval" || sub.status === "under_review") && (
-                          <Button size="sm" variant="outline" onClick={() => updateStatus(sub.id, sub.provider_id, "under_review")}>
+                        {(sub.status === "pending" || sub.status === "pending_approval" || sub.status === "pending") && (
+                          <Button size="sm" variant="outline" onClick={() => updateStatus(sub.id, sub.provider_id, "pending")}>
                             Mark Under Review
                           </Button>
                         )}

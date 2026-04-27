@@ -88,7 +88,7 @@ export default function AdminProviders() {
     const [{ data: subs }, { data: opps }] = await Promise.all([
       supabase
         .from("provider_subscriptions")
-        .select("provider_id, status, subscription_plans(display_name)")
+        .select("provider_id, status, subscription_plans(name)")
         .in("provider_id", ids.length ? ids : ["__none__"]),
       supabase
         .from("opportunities")
