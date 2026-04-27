@@ -49,7 +49,7 @@ export default function AdminSubscriptions() {
       updates.payment_status = "failed";
     }
 
-    if (status === "under_review") {
+    if (status === "pending") {
       updates.payment_status = "awaiting_payment";
     }
 
@@ -83,7 +83,7 @@ export default function AdminSubscriptions() {
   const statusVariant = (status: string) => {
     switch (status) {
       case "active": return "default";
-      case "pending": case "pending_approval": case "under_review": return "secondary";
+      case "pending": case "pending_approval": case "pending": return "secondary";
       case "expired": return "outline";
       case "cancelled": return "destructive";
       default: return "outline";
@@ -159,8 +159,8 @@ export default function AdminSubscriptions() {
                             Reject
                           </Button>
                         )}
-                        {(sub.status === "pending" || sub.status === "pending_approval" || sub.status === "under_review") && (
-                          <Button size="sm" variant="outline" onClick={() => updateStatus(sub.id, sub.provider_id, "under_review")}>
+                        {(sub.status === "pending" || sub.status === "pending_approval" || sub.status === "pending") && (
+                          <Button size="sm" variant="outline" onClick={() => updateStatus(sub.id, sub.provider_id, "pending")}>
                             Mark Under Review
                           </Button>
                         )}
