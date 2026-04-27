@@ -76,20 +76,20 @@ export default function SiteHeader() {
   const profilePath = profile?.role === "provider"
     ? "/dashboard/provider/settings"
     : ["admin", "editor", "viewer"].includes(profile?.role || "")
-    ? "/admin/settings"
-    : "/dashboard/seeker/profile";
+      ? "/admin/settings"
+      : "/dashboard/seeker/profile";
 
   const settingsPath = profile?.role === "provider"
     ? "/dashboard/provider/settings"
     : ["admin", "editor", "viewer"].includes(profile?.role || "")
-    ? "/admin/settings"
-    : "/dashboard/seeker/security";
+      ? "/admin/settings"
+      : "/dashboard/seeker/security";
 
   const notificationsPath = ["admin", "editor", "viewer"].includes(profile?.role || "")
     ? "/admin"
     : profile?.role === "provider"
-    ? "/dashboard/provider"
-    : "/dashboard/seeker/notifications";
+      ? "/dashboard/provider"
+      : "/dashboard/seeker/notifications";
 
   const UserMenu = ({ align = "end" as const, compact = false }) => (
     <DropdownMenu>
@@ -144,14 +144,12 @@ export default function SiteHeader() {
     return (
       <button
         onClick={() => navigate(href)}
-        className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 group ${
-          isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
-        }`}
+        className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 group ${isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
+          }`}
       >
         {label}
-        <span className={`absolute bottom-0.5 left-3 right-3 h-0.5 rounded-full bg-primary transition-transform duration-200 origin-left ${
-          isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
-        }`} />
+        <span className={`absolute bottom-0.5 left-3 right-3 h-0.5 rounded-full bg-primary transition-transform duration-200 origin-left ${isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+          }`} />
       </button>
     );
   };
@@ -160,7 +158,8 @@ export default function SiteHeader() {
   const path = window.location.pathname;
   const search = window.location.search;
   const oppDropdownActive = path.startsWith("/opportunities") && !(path === "/opportunities" && search === "?category=job");
-
+  const oppActive = path.startsWith("/opportunities");
+  const servicesActive = path.startsWith("/services");
   return (
     <>
       <header className="sticky top-0 z-50">
@@ -177,7 +176,10 @@ export default function SiteHeader() {
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
-                      <NavigationMenuTrigger className="text-sm font-medium text-muted-foreground hover:text-foreground bg-transparent hover:bg-accent/50 rounded-lg h-auto py-2 px-3">
+                      <NavigationMenuTrigger
+                        className={`text-sm font-medium bg-transparent hover:bg-accent/50 rounded-lg h-auto py-2 px-3 ${oppActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                      >
                         Opportunities
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
@@ -200,9 +202,10 @@ export default function SiteHeader() {
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
-                      <NavigationMenuTrigger className={`text-sm font-medium bg-transparent hover:bg-accent/50 rounded-lg h-auto py-2 px-3 ${
-                        oppDropdownActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                      }`}>
+                      <NavigationMenuTrigger
+                        className={`text-sm font-medium bg-transparent hover:bg-accent/50 rounded-lg h-auto py-2 px-3 ${servicesActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                      >
                         Services
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>

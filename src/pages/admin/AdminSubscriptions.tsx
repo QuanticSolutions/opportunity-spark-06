@@ -83,7 +83,7 @@ export default function AdminSubscriptions() {
   const statusVariant = (status: string) => {
     switch (status) {
       case "active": return "default";
-      case "pending": return "secondary";
+      case "pending": case "pending_approval": case "pending": return "secondary";
       case "expired": return "outline";
       case "cancelled": return "destructive";
       default: return "outline";
@@ -157,6 +157,11 @@ export default function AdminSubscriptions() {
                         {sub.status !== "cancelled" && sub.status !== "active" && (
                           <Button size="sm" variant="destructive" onClick={() => updateStatus(sub.id, sub.provider_id, "cancelled")}>
                             Reject
+                          </Button>
+                        )}
+                        {(sub.status === "pending" || sub.status === "pending_approval" || sub.status === "pending") && (
+                          <Button size="sm" variant="outline" onClick={() => updateStatus(sub.id, sub.provider_id, "pending")}>
+                            Mark Under Review
                           </Button>
                         )}
                       </div>

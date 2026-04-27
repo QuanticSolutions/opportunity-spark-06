@@ -110,7 +110,7 @@ export default function Subscription() {
     setRequestingReview(true);
     try {
       const requestReason = sub.status === "expired" ? "renewal_request" : "plan_change_request";
-      const nextStatus = sub.status === "expired" ? "pending" : sub.status === "active" ? "pending" : sub.status;
+      const nextStatus = sub.status === "expired" ? "pending_approval" : sub.status === "active" ? "under_review" : sub.status;
 
       const { error: subError } = await supabase
         .from("provider_subscriptions")
