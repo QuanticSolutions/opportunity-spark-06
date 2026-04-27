@@ -128,7 +128,7 @@ export default function ProviderSettings() {
 
   const statusColor = (status: string) => {
     if (status === "active") return "bg-emerald-100 text-emerald-700";
-    if (status === "cancelled" || status === "expired") return "bg-destructive/10 text-destructive";
+    if (status === "rejected") return "bg-destructive/10 text-destructive";
     return "bg-amber-100 text-amber-700";
   };
 
@@ -308,7 +308,7 @@ export default function ProviderSettings() {
                               onClick={async () => {
                                 await supabase.from("provider_subscriptions").update({
                                   plan_id: plan.id,
-                                  status: "pending",
+                                  status: "pending_payment",
                                   payment_status: "awaiting_payment",
                                 }).eq("id", sub.id);
                                 toast({ title: "Plan change requested", description: "Your new plan will be activated at the end of your current billing cycle." });

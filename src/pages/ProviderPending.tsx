@@ -37,7 +37,7 @@ export default function ProviderPending() {
       return;
     }
 
-    if (data.payment_status === "awaiting_payment" && data.status === "pending") {
+    if (data.status === "pending_payment" || data.payment_status === "awaiting_payment") {
       navigate("/provider/payment", { replace: true });
       return;
     }
@@ -55,12 +55,12 @@ export default function ProviderPending() {
   }
 
   const statusLabel =
-    sub?.status === "cancelled" ? "Cancelled" :
-    sub?.status === "expired" ? "Expired" :
+    sub?.status === "rejected" ? "Rejected" :
+    sub?.status === "under_review" ? "Under Review" :
     "Pending Approval";
 
   const statusColor =
-    sub?.status === "cancelled" || sub?.status === "expired" ? "bg-destructive/10 text-destructive" :
+    sub?.status === "rejected" ? "bg-destructive/10 text-destructive" :
     "bg-amber-100 text-amber-700";
 
   return (
@@ -84,17 +84,13 @@ export default function ProviderPending() {
 
             <div>
               <h1 className="text-2xl font-extrabold text-foreground">
-                {sub?.status === "cancelled"
-                  ? "Subscription Cancelled"
-                  : sub?.status === "expired"
-                  ? "Subscription Expired"
+                {sub?.status === "rejected"
+                  ? "Subscription Rejected"
                   : "Subscription Under Review"}
               </h1>
               <p className="mt-3 text-muted-foreground leading-relaxed">
-                {sub?.status === "cancelled"
-                  ? "Your subscription has been cancelled. Please contact support for more information."
-                  : sub?.status === "expired"
-                  ? "Your subscription has expired. Please renew to continue posting."
+                {sub?.status === "rejected"
+                  ? "Your subscription request was not approved. Please contact support for more information."
                   : "Your payment receipt has been submitted and is being verified by the admin team. You'll be notified once your subscription is approved."}
               </p>
               {sub?.admin_notes && (

@@ -27,7 +27,7 @@ export default function AdminDashboard() {
         supabase.from("profiles").select("*", { count: "exact", head: true }),
         supabase.from("opportunities").select("*", { count: "exact", head: true }).eq("status", "approved"),
         supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "provider"),
-        supabase.from("provider_subscriptions").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("provider_subscriptions").select("*", { count: "exact", head: true }).eq("status", "pending_approval"),
         supabase.from("articles").select("*", { count: "exact", head: true }).eq("status", "published"),
         supabase.from("applications").select("*", { count: "exact", head: true }),
       ]);
@@ -131,7 +131,7 @@ function PendingActions() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from("provider_subscriptions").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      supabase.from("provider_subscriptions").select("*", { count: "exact", head: true }).eq("status", "pending_approval"),
       supabase.from("content_submissions").select("*", { count: "exact", head: true }).eq("status", "pending"),
     ]).then(([subs, submissions]) => {
       setPending({

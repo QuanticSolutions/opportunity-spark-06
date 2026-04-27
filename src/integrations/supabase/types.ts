@@ -888,6 +888,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_emails: {
+        Args: { user_ids: string[] }
+        Returns: {
+          email: string
+          id: string
+        }[]
+      }
       increment_opportunity_views: {
         Args: { opp_id: string }
         Returns: undefined

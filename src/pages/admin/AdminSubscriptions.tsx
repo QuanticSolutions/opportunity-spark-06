@@ -17,7 +17,26 @@ export default function AdminSubscriptions() {
       .from("provider_subscriptions")
       .select("*, subscription_plans(name, display_name, posting_limit), profiles!provider_subscriptions_provider_id_fkey(full_name, email)")
       .order("created_at", { ascending: false });
-    setSubs(data || []);
+
+    const rows = data || [];
+
+    // Emails live in auth.users — fetch them via a SECURITY DEFINER helper (admin-only).
+    const providerIds = Array.from(new Set(rows.map((r: any) => r.provider_id).filter(Boolean)));
+    let emailMap = new Map<string, string>();
+    if (providerIds.length) {
+      const { data: emails } = await supabase.rpc("get_user_emails", { user_ids: providerIds });
+      (emails || []).forEach((e: any) => emailMap.set(e.id, e.email));
+    }
+
+    const merged = rows.map((r: any) => ({
+      ...r,
+      profiles: {
+        ...(r.profiles || {}),
+        email: emailMap.get(r.provider_id) || r.profiles?.email || null,
+      },
+    }));
+
+    setSubs(merged);
     setLoading(false);
   };
 
@@ -49,7 +68,7 @@ export default function AdminSubscriptions() {
       updates.payment_status = "failed";
     }
 
-    if (status === "pending") {
+    if (status === "under_review") {
       updates.payment_status = "awaiting_payment";
     }
 
@@ -83,7 +102,7 @@ export default function AdminSubscriptions() {
   const statusVariant = (status: string) => {
     switch (status) {
       case "active": return "default";
-      case "pending": return "secondary";
+      case "pending": case "pending_approval": case "under_review": return "secondary";
       case "expired": return "outline";
       case "cancelled": return "destructive";
       default: return "outline";
@@ -123,7 +142,12 @@ export default function AdminSubscriptions() {
                 {subs.map((sub) => (
                   <TableRow key={sub.id}>
                     <TableCell className="font-medium">
-                      {(sub.profiles as any)?.full_name || "—"}
+                      <div>{(sub.profiles as any)?.full_name || "—"}</div>
+                      {(sub.profiles as any)?.email && (
+                        <div className="text-xs text-muted-foreground font-normal">
+                          {(sub.profiles as any).email}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>{sub.subscription_plans?.name || "—"}</TableCell>
                     <TableCell>
@@ -154,7 +178,7 @@ export default function AdminSubscriptions() {
                             {sub.status === "expired" ? "Renew" : "Approve"}
                           </Button>
                         )}
-                        {sub.status !== "cancelled" && sub.status !== "active" && (
+                        {sub.status !== "rejected" && sub.status !== "active" && (
                           <Button size="sm" variant="destructive" onClick={() => updateStatus(sub.id, sub.provider_id, "cancelled")}>
                             Reject
                           </Button>

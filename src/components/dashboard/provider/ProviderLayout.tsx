@@ -21,19 +21,19 @@ export default function ProviderLayout() {
     }
 
     // Awaiting payment → go to payment page
-    if (subscription.payment_status === "awaiting_payment" && subscription.status === "pending") {
+    if (subscription.status === "pending_payment" && subscription.payment_status === "awaiting_payment") {
       navigate("/provider/payment", { replace: true });
       return;
     }
 
-    // Pending approval → go to pending page
-    if (subscription.status === "pending") {
+    // Under review or pending → go to pending page
+    if (subscription.status === "under_review" || subscription.status === "pending_approval") {
       navigate("/provider/pending", { replace: true });
       return;
     }
 
-    // Cancelled → go to pending page (shows cancellation message)
-    if (subscription.status === "cancelled") {
+    // Rejected → go to pending page (shows rejection message)
+    if (subscription.status === "rejected") {
       navigate("/provider/pending", { replace: true });
       return;
     }
@@ -51,10 +51,10 @@ export default function ProviderLayout() {
   const getBannerStyle = () => {
     if (!subscription) return "";
     const s = subscription.status;
-    if (s === "pending") {
+    if (s === "pending_approval" || s === "under_review" || s === "pending_payment") {
       return "border-amber-300 bg-amber-50 text-amber-700";
     }
-    // expired, cancelled, or any non-active status
+    // inactive, rejected, expired, or any non-active status
     return "border-destructive/30 bg-destructive/10 text-destructive";
   };
 
@@ -67,12 +67,10 @@ export default function ProviderLayout() {
           <div className={`mx-6 mt-4 flex items-center gap-2 rounded-lg border px-4 py-3 text-sm ${getBannerStyle()}`}>
             <AlertCircle size={16} />
             <span>
-              {subscription.status === "pending"
-                ? subscription.payment_status === "awaiting_payment"
-                  ? "Payment pending. Please complete payment to activate your subscription."
-                  : "Your subscription is under review. Some features may be restricted."
-                : subscription.status === "expired"
-                ? "Your subscription has expired. Please renew to continue posting."
+              {subscription.status === "pending_approval" || subscription.status === "under_review"
+                ? "Your subscription is under review. Some features may be restricted."
+                : subscription.status === "pending_payment"
+                ? "Payment pending. Please complete payment to activate your subscription."
                 : "Your subscription is inactive. Please contact support or update your plan."}
             </span>
           </div>

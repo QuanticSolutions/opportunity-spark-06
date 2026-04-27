@@ -217,8 +217,8 @@ export default function AdminProviders() {
     const adminUser = (await supabase.auth.getUser()).data.user;
 
     if (type === "suspend") {
-      // Suspending a provider cancels their active subscription
-      await supabase.from("provider_subscriptions").update({ status: "cancelled" }).eq("provider_id", provider.id);
+      // Update subscription status to suspended if exists
+      await supabase.from("provider_subscriptions").update({ status: "suspended" }).eq("provider_id", provider.id);
       await supabase.from("admin_logs").insert({
         admin_id: adminUser?.id,
         action: "Provider suspended",
@@ -258,7 +258,7 @@ export default function AdminProviders() {
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const totalCount = providers.length;
-  const pendingCount = providers.filter((p) => p.subscription?.status === "pending").length;
+  const pendingCount = providers.filter((p) => p.subscription?.status === "pending" || p.subscription?.status === "pending_approval").length;
   const activeCount = providers.filter((p) => p.subscription?.status === "active").length;
   const premiumCount = providers.filter((p) => {
     const plan = (p.subscription?.plan_display_name || "").toLowerCase();
@@ -275,11 +275,13 @@ export default function AdminProviders() {
       case "active":
         return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">Active</Badge>;
       case "pending":
+      case "pending_approval":
+      case "under_review":
         return <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">Pending</Badge>;
-      case "expired":
-        return <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">Expired</Badge>;
+      case "suspended":
+        return <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">Suspended</Badge>;
       case "cancelled":
-        return <Badge className="bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100">Cancelled</Badge>;
+        return <Badge className="bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100">Deleted</Badge>;
       default:
         return <Badge variant="outline" className="text-muted-foreground">No Subscription</Badge>;
     }
