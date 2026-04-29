@@ -38,7 +38,7 @@ export function useProviderSubscription() {
       .from("provider_subscriptions")
       .select("*, subscription_plans(*)")
       .eq("provider_id", user!.id)
-      .single();
+      .maybeSingle();
 
     setSubscription(data as any);
     setLoading(false);

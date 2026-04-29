@@ -26,12 +26,12 @@ export default function ProviderPayment() {
   }, [user]);
 
   const fetchSubscription = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("provider_subscriptions")
       .select("*, subscription_plans(*)")
       .eq("provider_id", user!.id)
-      .single()
-  
+      .maybeSingle();
+
     if (!data) { navigate("/provider/subscribe", { replace: true }); return; }
     if (data.status === "active") { navigate("/dashboard/provider", { replace: true }); return; }
     // if (data.receipt_url || data.status === "pending") { navigate("/provider/pending", { replace: true }); return; }

@@ -50,7 +50,7 @@ export default function Subscription() {
 
   const fetchData = async () => {
     const [{ data: subData }, { data: planData }] = await Promise.all([
-      supabase.from("provider_subscriptions").select("*, subscription_plans(*)").eq("provider_id", user!.id).single(),
+      supabase.from("provider_subscriptions").select("*, subscription_plans(*)").eq("provider_id", user!.id).maybeSingle(),
       supabase.from("subscription_plans").select("*").order("tier"),
     ]);
     setSub(subData);
@@ -135,6 +135,14 @@ export default function Subscription() {
 
       // Wipe old audit logs + subscription so the flow restarts fresh
       await supabase.from("subscription_audit_logs").delete().eq("subscription_id", sub.id);
+
+      // Remove old payment receipts from storage
+      const { data: oldReceipts } = await supabase.storage.from("payment_receipts").list(user.id);
+      if (oldReceipts && oldReceipts.length > 0) {
+        const paths = oldReceipts.map((f) => `${user.id}/${f.name}`);
+        await supabase.storage.from("payment_receipts").remove(paths);
+      }
+
       const { error: deleteError } = await supabase
         .from("provider_subscriptions")
         .delete()

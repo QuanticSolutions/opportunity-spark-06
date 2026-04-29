@@ -99,6 +99,14 @@ export default function Opportunities() {
 
       // Wipe prior audit logs + the existing subscription so the provider can start fresh
       await supabase.from("subscription_audit_logs").delete().eq("subscription_id", subscription.id);
+
+      // Remove old payment receipts from storage so the provider uploads a fresh one
+      const { data: oldReceipts } = await supabase.storage.from("payment_receipts").list(user.id);
+      if (oldReceipts && oldReceipts.length > 0) {
+        const paths = oldReceipts.map((f) => `${user.id}/${f.name}`);
+        await supabase.storage.from("payment_receipts").remove(paths);
+      }
+
       const { error: deleteError } = await supabase
         .from("provider_subscriptions")
         .delete()
