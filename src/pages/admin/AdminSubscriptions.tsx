@@ -49,27 +49,18 @@ export default function AdminSubscriptions() {
       updates.approved_by = adminUser?.id;
       updates.approved_at = new Date().toISOString();
       updates.status = "active";
-      updates.payment_status = "paid";
 
       const now = new Date();
       const sub = subs.find((item) => item.id === subId);
-      const cycleStart = sub?.status === "active" && sub?.current_period_end && new Date(sub.current_period_end) > now
-        ? new Date(sub.current_period_end)
+      const cycleStart = sub?.status === "active" && sub?.end && new Date(sub.end) > now
+        ? new Date(sub.end)
         : now;
       const cycleEnd = new Date(cycleStart);
       cycleEnd.setMonth(cycleEnd.getMonth() + 1);
 
-      updates.current_period_start = cycleStart.toISOString();
-      updates.current_period_end = cycleEnd.toISOString();
+      updates.start = cycleStart.toISOString();
+      updates.end = cycleEnd.toISOString();
       updates.renewal_date = cycleEnd.toISOString();
-    }
-
-    if (status === "cancelled") {
-      updates.payment_status = "failed";
-    }
-
-    if (status === "under_review") {
-      updates.payment_status = "awaiting_payment";
     }
 
     const { error } = await supabase
