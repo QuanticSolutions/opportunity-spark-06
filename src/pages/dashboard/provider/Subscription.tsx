@@ -50,7 +50,7 @@ export default function Subscription() {
 
   const fetchData = async () => {
     const [{ data: subData }, { data: planData }] = await Promise.all([
-      supabase.from("provider_subscriptions").select("*, subscription_plans(*)").eq("provider_id", user!.id).single(),
+      supabase.from("provider_subscriptions").select("*, subscription_plans(*)").eq("provider_id", user!.id).maybeSingle(),
       supabase.from("subscription_plans").select("*").order("tier"),
     ]);
     setSub(subData);
