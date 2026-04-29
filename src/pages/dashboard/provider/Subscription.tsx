@@ -115,37 +115,35 @@ export default function Subscription() {
     setRequestingReview(true);
     try {
       const requestReason = sub.status === "expired" ? "renewal_request" : "plan_change_request";
-      const nextStatus = sub.status === "expired" ? "pending_approval" : sub.status === "active" ? "under_review" : sub.status;
+      const adminMessage = sub.status === "expired"
+        ? "A provider restarted their subscription after expiration."
+        : "A provider started a new plan request from the dashboard.";
 
-      const { error: subError } = await supabase
-        .from("provider_subscriptions")
-        .update({ status: nextStatus })
-        .eq("id", sub.id);
-
-      if (subError) throw subError;
-
-      const [{ error: notificationError }, { error: auditError }] = await Promise.all([
+      // Log + notify admin first
+      await Promise.all([
         supabase.from("admin_notifications").insert({
           provider_id: user.id,
           type: requestReason,
-          message: sub.status === "expired"
-            ? "A provider requested subscription renewal from the dashboard."
-            : "A provider requested a plan review from the dashboard.",
+          message: adminMessage,
         }),
         supabase.from("subscription_audit_logs").insert({
           subscription_id: sub.id,
           action: requestReason,
-          notes: sub.status === "expired"
-            ? "Provider requested subscription renewal."
-            : "Provider requested a new plan or posting limit review.",
+          notes: "Provider restarted subscription request flow.",
         }),
       ]);
 
-      if (notificationError) throw notificationError;
-      if (auditError) throw auditError;
+      // Wipe old audit logs + subscription so the flow restarts fresh
+      await supabase.from("subscription_audit_logs").delete().eq("subscription_id", sub.id);
+      const { error: deleteError } = await supabase
+        .from("provider_subscriptions")
+        .delete()
+        .eq("id", sub.id);
 
-      toast({ title: "Request sent", description: "Admin has been notified and your subscription is now under review." });
-      await fetchData();
+      if (deleteError) throw deleteError;
+
+      toast({ title: "Let's pick a new plan", description: "Select a plan and upload your payment receipt to send a fresh request to admin." });
+      window.location.href = "/provider/subscribe";
     } catch (err: any) {
       toast({ title: "Request failed", description: err.message, variant: "destructive" });
     } finally {
