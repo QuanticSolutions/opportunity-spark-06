@@ -76,28 +76,8 @@ export default function Opportunities() {
     if (!user || !subscription) return;
     setRequestingRenewal(true);
     try {
-      const requestReason = isExpired ? "renewal_request" : hasReachedPostingLimit ? "plan_change_request" : "subscription_update_request";
-      const adminMessage = isExpired
-        ? "A provider restarted their subscription after expiration."
-        : hasReachedPostingLimit
-          ? "A provider reached the posting limit and started a new plan request."
-          : "A provider started a new subscription request.";
-
-      // Notify admin BEFORE deleting (audit + notification)
-      await Promise.all([
-        supabase.from("admin_notifications").insert({
-          provider_id: user.id,
-          type: requestReason,
-          message: adminMessage,
-        }),
-        supabase.from("subscription_audit_logs").insert({
-          subscription_id: subscription.id,
-          action: requestReason,
-          notes: limitMessage || "Provider restarted subscription request flow.",
-        }),
-      ]);
-
-      // Wipe prior audit logs + the existing subscription so the provider can start fresh
+      // Wipe prior audit logs + the existing subscription so the provider can start fresh.
+      // Admin will be notified once the provider re-selects a plan and uploads a new receipt.
       await supabase.from("subscription_audit_logs").delete().eq("subscription_id", subscription.id);
 
       // Remove old payment receipts from storage so the provider uploads a fresh one

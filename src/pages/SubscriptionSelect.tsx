@@ -56,14 +56,8 @@ export default function SubscriptionSelect() {
 
       if (error) throw error;
 
-      // Create admin notification
-      await supabase.from("admin_notifications").insert({
-        provider_id: user.id,
-        type: "subscription_request",
-        message: "New provider subscription request received.",
-      });
-
-      // Create audit log
+      // Audit log only — admin notification is sent after the receipt is uploaded
+      // on the next step so admins only see complete requests.
       if (subData) {
         await supabase.from("subscription_audit_logs").insert({
           subscription_id: subData.id,
