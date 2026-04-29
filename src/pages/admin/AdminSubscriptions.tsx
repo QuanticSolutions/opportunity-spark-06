@@ -145,7 +145,7 @@ export default function AdminSubscriptions() {
                       <Badge variant={statusVariant(sub.status)}>{sub.status}</Badge>
                     </TableCell>
                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                       {sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString() : "—"}
+                       {sub.end ? new Date(sub.end).toLocaleDateString() : (sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString() : "—")}
                      </TableCell>
                     <TableCell>
                       {sub.receipt_url ? (
