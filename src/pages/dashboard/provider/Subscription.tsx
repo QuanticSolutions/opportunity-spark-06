@@ -166,7 +166,7 @@ export default function Subscription() {
               Manage Billing
             </Button>
           )}
-          {sub && (sub.status === "expired" || sub.status === "active" || sub.status === "rejected" || sub.status === "inactive") && (
+          {sub && (
             <Button variant="outline" size="sm" onClick={handleRequestReview} disabled={requestingReview}>
               <LifeBuoy size={16} className="mr-1" />
               {requestingReview ? "Starting…" : sub.status === "expired" ? "Renew Subscription" : "Request New Plan"}
