@@ -115,9 +115,7 @@ export default function Subscription() {
     setRequestingReview(true);
     try {
       const requestReason = sub.status === "expired" ? "renewal_request" : "plan_change_request";
-      const adminMessage = sub.status === "expired"
-        ? "A provider restarted their subscription after expiration."
-        : "A provider started a new plan request from the dashboard.";
+      const nextStatus = sub.status === "expired" ? "pending" : sub.status === "active" ? "pending" : sub.status;
 
       // Log + notify admin first
       await Promise.all([
