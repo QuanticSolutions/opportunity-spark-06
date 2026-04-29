@@ -58,8 +58,8 @@ export default function AdminSubscriptions() {
       const cycleEnd = new Date(cycleStart);
       cycleEnd.setMonth(cycleEnd.getMonth() + 1);
 
-      updates.start = cycleStart.toISOString();
-      updates.end = cycleEnd.toISOString();
+      updates.start_date = cycleStart.toISOString();
+      updates.end_date = cycleEnd.toISOString();
       updates.renewal_date = cycleEnd.toISOString();
     }
 
