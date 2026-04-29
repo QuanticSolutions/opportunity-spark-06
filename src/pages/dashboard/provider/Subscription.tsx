@@ -114,26 +114,9 @@ export default function Subscription() {
 
     setRequestingReview(true);
     try {
-      const requestReason = sub.status === "expired" ? "renewal_request" : "plan_change_request";
-      const adminMessage = sub.status === "expired"
-        ? "A provider restarted their subscription after expiration."
-        : "A provider started a new plan request from the dashboard.";
-
-      // Log + notify admin first
-      await Promise.all([
-        supabase.from("admin_notifications").insert({
-          provider_id: user.id,
-          type: requestReason,
-          message: adminMessage,
-        }),
-        supabase.from("subscription_audit_logs").insert({
-          subscription_id: sub.id,
-          action: requestReason,
-          notes: "Provider restarted subscription request flow.",
-        }),
-      ]);
-
-      // Wipe old audit logs + subscription so the flow restarts fresh
+      // Wipe old audit logs + subscription so the flow restarts fresh.
+      // No admin notification is sent here — admin only gets notified once the
+      // provider has selected a new plan AND uploaded a fresh receipt.
       await supabase.from("subscription_audit_logs").delete().eq("subscription_id", sub.id);
 
       // Remove old payment receipts from storage
@@ -183,7 +166,7 @@ export default function Subscription() {
               Manage Billing
             </Button>
           )}
-          {sub && (sub.status === "expired" || sub.status === "active" || sub.status === "rejected" || sub.status === "inactive") && (
+          {sub && (
             <Button variant="outline" size="sm" onClick={handleRequestReview} disabled={requestingReview}>
               <LifeBuoy size={16} className="mr-1" />
               {requestingReview ? "Starting…" : sub.status === "expired" ? "Renew Subscription" : "Request New Plan"}
