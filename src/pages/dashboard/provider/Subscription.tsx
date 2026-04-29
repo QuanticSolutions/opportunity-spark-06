@@ -116,6 +116,11 @@ export default function Subscription() {
     try {
       const requestReason = sub.status === "expired" ? "renewal_request" : "plan_change_request";
       const nextStatus = sub.status === "expired" ? "pending" : sub.status === "active" ? "pending" : sub.status;
+      
+      const adminMessage =
+      sub.status === "expired"
+        ? `Provider ${user.email} has requested to renew their expired subscription.`
+        : `Provider ${user.email} has requested a new plan change (current status: ${sub.status}).`;
 
       // Log + notify admin first
       await Promise.all([
