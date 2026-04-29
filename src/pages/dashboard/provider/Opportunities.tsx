@@ -78,21 +78,13 @@ export default function Opportunities() {
     try {
       const requestReason = isExpired ? "renewal_request" : hasReachedPostingLimit ? "plan_change_request" : "subscription_update_request";
       const adminMessage = isExpired
-        ? "A provider requested subscription renewal after expiration."
+        ? "A provider restarted their subscription after expiration."
         : hasReachedPostingLimit
-          ? "A provider reached the posting limit and requested a plan update."
-          : "A provider requested a subscription update.";
+          ? "A provider reached the posting limit and started a new plan request."
+          : "A provider started a new subscription request.";
 
-      const nextStatus = isExpired ? "pending_approval" : subscription.status === "active" ? "under_review" : subscription.status;
-
-      const { error: updateError } = await supabase
-        .from("provider_subscriptions")
-        .update({ status: nextStatus, payment_status: isExpired ? "awaiting_payment" : subscription.payment_status })
-        .eq("id", subscription.id);
-
-      if (updateError) throw updateError;
-
-      const [{ error: notificationError }, { error: auditError }] = await Promise.all([
+      // Notify admin BEFORE deleting (audit + notification)
+      await Promise.all([
         supabase.from("admin_notifications").insert({
           provider_id: user.id,
           type: requestReason,
@@ -101,20 +93,35 @@ export default function Opportunities() {
         supabase.from("subscription_audit_logs").insert({
           subscription_id: subscription.id,
           action: requestReason,
-          notes: limitMessage || "Provider requested a subscription update.",
+          notes: limitMessage || "Provider restarted subscription request flow.",
         }),
       ]);
 
-      if (notificationError) throw notificationError;
-      if (auditError) throw auditError;
+      // Wipe prior audit logs + the existing subscription so the provider can start fresh
+      await supabase.from("subscription_audit_logs").delete().eq("subscription_id", subscription.id);
 
-      await refetchSubscription();
+      // Remove old payment receipts from storage so the provider uploads a fresh one
+      const { data: oldReceipts } = await supabase.storage.from("payment_receipts").list(user.id);
+      if (oldReceipts && oldReceipts.length > 0) {
+        const paths = oldReceipts.map((f) => `${user.id}/${f.name}`);
+        await supabase.storage.from("payment_receipts").remove(paths);
+      }
+
+      const { error: deleteError } = await supabase
+        .from("provider_subscriptions")
+        .delete()
+        .eq("id", subscription.id);
+
+      if (deleteError) throw deleteError;
+
       toast({
-        title: "Request sent",
-        description: "Your renewal or plan request has been sent to admin for review.",
+        title: "Let's pick a new plan",
+        description: "Select a plan and upload your payment receipt to send a fresh request to admin.",
       });
+
+      navigate("/provider/subscribe");
     } catch (err: any) {
-      toast({ title: "Unable to send request", description: err.message, variant: "destructive" });
+      toast({ title: "Unable to start new request", description: err.message, variant: "destructive" });
     } finally {
       setRequestingRenewal(false);
     }

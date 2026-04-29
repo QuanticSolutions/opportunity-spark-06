@@ -24,7 +24,7 @@ export default function SubscriptionSelect() {
         .from("provider_subscriptions")
         .select("id, status")
         .eq("provider_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         if (existing.status === "active") {
